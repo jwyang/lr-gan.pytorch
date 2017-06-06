@@ -1,4 +1,4 @@
-# Pytorch code for Layered Recursive Generative Adversarial Networks
+## Pytorch code for Layered Recursive Generative Adversarial Networks
 
 ### Introduction
 
