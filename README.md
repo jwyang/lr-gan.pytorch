@@ -6,7 +6,7 @@ This is the pytorch implementation of our ICLR 2017 paper "LR-GAN: Layered Recur
 
 ### Disclaimer
 
-This is the reproduction code of LR-GAN based on Pytorch. Our original code was implemented based on Torch during the first author's internship. All the results presented in our paper were obtained based on the Torch code, which cannot be released since the restriction contract.
+This is the reproduction code of LR-GAN based on Pytorch. Our original code was implemented based on Torch during the first author's internship. All the results presented in our paper were obtained based on the Torch code, which cannot be released since the firm restriction.
 
 ### Citation
 
