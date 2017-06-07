@@ -105,7 +105,6 @@ def weights_init(m):
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
-
 class _netG(nn.Module):
     def __init__(self, ngpu, nsize):
         super(_netG, self).__init__()
@@ -196,7 +195,7 @@ class _netG(nn.Module):
         fgmaskT = []
         for i in range(ntimestep):
             hx, cx = self.lstmcell(input[i], (hx, cx))
-            hx_view = hx.view(batchSize, nz, 1, 1)
+            hx_view = hx.contiguous().view(batchSize, nz, 1, 1)
             if i == 0:
                 bg = self.Gbg(hx_view)
                 outputsT.append(bg)
@@ -206,20 +205,22 @@ class _netG(nn.Module):
                 fgm = self.Gfgm(fgc)
                 fgt = self.Gtransform(hx) # Nx6
 
-                # fgt.data.select(1, 0).clamp(1.2, 4)
-                # fgt.data.select(1, 1).clamp(-0.2, 0.2)
-                # fgt.data.select(1, 2).clamp(-1, 1)
-                # fgt.data.select(1, 3).clamp(-0.2, 0.2)
-                # fgt.data.select(1, 4).clamp(1.2, 4)
-                # fgt.data.select(1, 5).clamp(-1, 1)
-
-                fgt_view = fgt.view(batchSize, 2, 3) # Nx2N3
+                # bg.data.fill_(0)
+                # fgm.data.fill_(1)
+                # fgi.data.fill_(1)
+                # fgt.select(1, 0).clamp(1.2, 4)
+                # fgt.select(1, 1).clamp(-0.2, 0.2)
+                # fgt.select(1, 2).clamp(-1, 1)
+                # fgt.select(1, 3).clamp(-0.2, 0.2)
+                # fgt.select(1, 4).clamp(1.2, 4)
+                # fgt.select(1, 5).clamp(-1, 1)
+                fgt_view = fgt.contiguous().view(batchSize, 2, 3) # Nx2N3
                 fgg = self.Ggrid(fgt_view)
-                bg4c = bg.permute(0, 2, 3, 1) # torch.transpose(torch.transpose(bg, 1, 2), 2, 3) #
-                fgi4c = fgi.permute(0, 2, 3, 1) # torch.transpose(torch.transpose(fgi, 1, 2), 2, 3) #
-                fgm4c = fgm.permute(0, 2, 3, 1) # torch.transpose(torch.transpose(fgm, 1, 2), 2, 3) #
+                bg4c = bg.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(bg, 1, 2), 2, 3) #
+                fgi4c = fgi.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(fgi, 1, 2), 2, 3) #
+                fgm4c = fgm.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(fgm, 1, 2), 2, 3) #
                 temp = self.Compositor(bg4c, fgi4c, fgg, fgm4c)
-                comb = temp.permute(0, 3, 1, 2) # torch.transpose(torch.transpose(temp, 2, 3), 1, 2) #
+                comb = temp.permute(0, 3, 1, 2).contiguous() # torch.transpose(torch.transpose(temp, 2, 3), 1, 2) #
                 outputsT.append(comb)
                 fgimgsT.append(fgi)
                 fgmaskT.append(fgm)
@@ -317,7 +318,6 @@ for epoch in range(opt.niter):
         label.resize_(batch_size).fill_(real_label)
         inputv = Variable(input)
         labelv = Variable(label)
-
         output = netD(inputv)
         errD_real = criterion(output, labelv)
         errD_real.backward()
@@ -334,6 +334,7 @@ for epoch in range(opt.niter):
         D_G_z1 = output.data.mean()
         errD = errD_real + errD_fake
         optimizerD.step()
+
         ############################
         # (2) Update G network: maximize log(D(G(z)))
         ###########################
@@ -344,7 +345,6 @@ for epoch in range(opt.niter):
         errG.backward()
         D_G_z2 = output.data.mean()
         optimizerG.step()
-        # print(torch.sum(netG.Gtransform.weight.data))
 
         print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f'
               % (epoch, opt.niter, i, len(dataloader),
@@ -361,7 +361,7 @@ for epoch in range(opt.niter):
                         '%s/fake_samples_t_%01d_fgimg.png' % (opt.outimgf, 1)) # normalize=True
                 vutils.save_image(fgmaskseq[0].data,
                         '%s/fake_samples_t_%01d_fgmask.png' % (opt.outimgf, 1)) # normalize=True
-        # exit()
+            # exit()
 
     # do checkpointing
     torch.save(netG.state_dict(), '%s/netG_epoch_%d.pth' % (opt.outmodelf, epoch))
