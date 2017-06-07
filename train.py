@@ -25,6 +25,7 @@ parser.add_argument('--nz', type=int, default=100, help='size of the latent z ve
 parser.add_argument('--ngf', type=int, default=64)
 parser.add_argument('--ndf', type=int, default=64)
 parser.add_argument('--ntimestep', type=int, default=2, help='number of recursive steps')
+parser.add_argument('--maxobjscale', type=float, default=1.2, help='maximal object size relative to image')
 parser.add_argument('--niter', type=int, default=25, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=0.0002, help='learning rate, default=0.0002')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
@@ -33,8 +34,8 @@ parser.add_argument('--ngpu', type=int, default=1, help='number of GPUs to use')
 parser.add_argument('--netG', default='', help="path to netG (to continue training)")
 parser.add_argument('--netD', default='', help="path to netD (to continue training)")
 parser.add_argument('--outf', default='.', help='folder to output images and model checkpoints')
-parser.add_argument('--outimgf', default='images', help='folder to output images and model checkpoints')
-parser.add_argument('--outmodelf', default='models', help='folder to output images and model checkpoints')
+parser.add_argument('--outimgf', default='images', help='folder to output images checkpoints')
+parser.add_argument('--outmodelf', default='models', help='folder to model checkpoints')
 parser.add_argument('--manualSeed', type=int, help='manual seed')
 
 opt = parser.parse_args()
@@ -101,7 +102,7 @@ def weights_init(m):
     if classname.find('Conv') != -1:
         m.weight.data.normal_(0.0, 0.02)
     elif classname.find('BatchNorm') != -1:
-        m.weight.data.normal_(0.0, 0.02)
+        m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
 
@@ -133,10 +134,10 @@ class _netG(nn.Module):
         # define grid generator G_grid
         #### define linear layer to convert high-dim vector to 6-dim
         self.Gtransform = nn.Linear(nz, 6)
-        # self.Gtransform.weight.data.zero_()
+        self.Gtransform.weight.data.zero_()
         self.Gtransform.bias.data.zero_()
-        self.Gtransform.bias.data[0] = 1.2
-        self.Gtransform.bias.data[4] = 1.2
+        self.Gtransform.bias.data[0] = opt.maxobjscale
+        self.Gtransform.bias.data[4] = opt.maxobjscale
 
         self.Ggrid = AffineGridGen(nsize, nsize, aux_loss = False)
 
@@ -188,8 +189,8 @@ class _netG(nn.Module):
 
     def forward(self, input):
         batchSize = input.size()[1]
-        hx = Variable(torch.randn(batchSize, nz).cuda())
-        cx = Variable(torch.randn(batchSize, nz).cuda())
+        hx = Variable(torch.zeros(batchSize, nz).cuda())
+        cx = Variable(torch.zeros(batchSize, nz).cuda())
         outputsT = []
         fgimgsT = []
         fgmaskT = []
@@ -204,20 +205,21 @@ class _netG(nn.Module):
                 fgi = self.Gfgi(fgc)
                 fgm = self.Gfgm(fgc)
                 fgt = self.Gtransform(hx) # Nx6
-                fgt.select(1, 0).clamp(1.2, 4)
-                fgt.select(1, 1).clamp(-0.2, 0.2)
-                fgt.select(1, 2).clamp(-1, 1)
-                fgt.select(1, 3).clamp(-0.2, 0.2)
-                fgt.select(1, 4).clamp(1.2, 4)
-                fgt.select(1, 5).clamp(-1, 1)
+
+                # fgt.data.select(1, 0).clamp(1.2, 4)
+                # fgt.data.select(1, 1).clamp(-0.2, 0.2)
+                # fgt.data.select(1, 2).clamp(-1, 1)
+                # fgt.data.select(1, 3).clamp(-0.2, 0.2)
+                # fgt.data.select(1, 4).clamp(1.2, 4)
+                # fgt.data.select(1, 5).clamp(-1, 1)
+
                 fgt_view = fgt.view(batchSize, 2, 3) # Nx2N3
                 fgg = self.Ggrid(fgt_view)
-                bg4c = bg.permute(0, 2, 3, 1)
-                fgi4c = fgi.permute(0, 2, 3, 1)
-                fgg4c = fgg.permute(0, 2, 3, 1)
-                fgm4c = fgm.permute(0, 2, 3, 1)
-                temp = self.Compositor(bg4c, fgi4c, fgg4c, fgm4c)
-                comb = temp.permute(0, 3, 1, 2)
+                bg4c = bg.permute(0, 2, 3, 1) # torch.transpose(torch.transpose(bg, 1, 2), 2, 3) #
+                fgi4c = fgi.permute(0, 2, 3, 1) # torch.transpose(torch.transpose(fgi, 1, 2), 2, 3) #
+                fgm4c = fgm.permute(0, 2, 3, 1) # torch.transpose(torch.transpose(fgm, 1, 2), 2, 3) #
+                temp = self.Compositor(bg4c, fgi4c, fgg, fgm4c)
+                comb = temp.permute(0, 3, 1, 2) # torch.transpose(torch.transpose(temp, 2, 3), 1, 2) #
                 outputsT.append(comb)
                 fgimgsT.append(fgi)
                 fgmaskT.append(fgm)
@@ -272,8 +274,8 @@ print(netD)
 criterion = nn.BCELoss()
 
 input = torch.FloatTensor(opt.batchSize, 3, opt.imageSize, opt.imageSize)
-noise = torch.FloatTensor(opt.ntimestep, opt.batchSize, nz)
-fixed_noise = torch.FloatTensor(opt.ntimestep, opt.batchSize, nz).normal_(0, 1)
+noise = torch.FloatTensor(ntimestep, opt.batchSize, nz)
+fixed_noise = torch.FloatTensor(ntimestep, opt.batchSize, nz).normal_(0, 1)
 label = torch.FloatTensor(opt.batchSize)
 real_label = 1
 fake_label = 0
@@ -285,19 +287,16 @@ if opt.cuda:
     input, label = input.cuda(), label.cuda()
     noise, fixed_noise = noise.cuda(), fixed_noise.cuda()
 
-input = Variable(input)
-label = Variable(label)
-# noise = Variable(noise)
 fixed_noise = Variable(fixed_noise)
 
-noise_all = []
-fixed_noise_all = []
-for i in range(ntimestep):
-    noise_temp = torch.FloatTensor(opt.batchSize, nz, 1, 1)
-    fixed_noise_temp = torch.FloatTensor(opt.batchSize, nz, 1, 1).normal_(0, 1)
-    noise_temp, fixed_noise_temp = noise_temp.cuda(), fixed_noise_temp.cuda()
-    noise_all.append(Variable(noise_temp))
-    fixed_noise_all.append(Variable(fixed_noise_temp))
+# noise_all = []
+# fixed_noise_all = []
+# for i in range(ntimestep):
+#     noise_temp = torch.FloatTensor(opt.batchSize, nz, 1, 1)
+#     fixed_noise_temp = torch.FloatTensor(opt.batchSize, nz, 1, 1).normal_(0, 1)
+#     noise_temp, fixed_noise_temp = noise_temp.cuda(), fixed_noise_temp.cuda()
+#     noise_all.append(Variable(noise_temp))
+#     fixed_noise_all.append(Variable(fixed_noise_temp))
 
 # setup optimizer
 optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
@@ -312,11 +311,15 @@ for epoch in range(opt.niter):
         netD.zero_grad()
         real_cpu, _ = data
         batch_size = real_cpu.size(0)
-        input.data.resize_(real_cpu.size()).copy_(real_cpu)
-        label.data.resize_(batch_size).fill_(real_label)
+        if opt.cuda:
+            real_cpu = real_cpu.cuda()
+        input.resize_as_(real_cpu).copy_(real_cpu)
+        label.resize_(batch_size).fill_(real_label)
+        inputv = Variable(input)
+        labelv = Variable(label)
 
-        output = netD(input)
-        errD_real = criterion(output, label)
+        output = netD(inputv)
+        errD_real = criterion(output, labelv)
         errD_real.backward()
         D_x = output.data.mean()
 
@@ -324,24 +327,24 @@ for epoch in range(opt.niter):
         noise.resize_(ntimestep, batch_size, nz).normal_(0, 1)
         noisev = Variable(noise)
         fake, fakeseq, fgimgseq, fgmaskseq = netG(noisev)
-        label.data.fill_(fake_label)
+        labelv = Variable(label.fill_(fake_label))
         output = netD(fake.detach())
-        errD_fake = criterion(output, label)
+        errD_fake = criterion(output, labelv)
         errD_fake.backward()
         D_G_z1 = output.data.mean()
         errD = errD_real + errD_fake
         optimizerD.step()
-
         ############################
         # (2) Update G network: maximize log(D(G(z)))
         ###########################
         netG.zero_grad()
-        label.data.fill_(real_label)  # fake labels are real for generator cost
+        labelv = Variable(label.fill_(real_label))  # fake labels are real for generator cost
         output = netD(fake)
-        D_G_z2 = output.data.mean()
-        errG = criterion(output, label)
+        errG = criterion(output, labelv)
         errG.backward()
+        D_G_z2 = output.data.mean()
         optimizerG.step()
+        # print(torch.sum(netG.Gtransform.weight.data))
 
         print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f'
               % (epoch, opt.niter, i, len(dataloader),
