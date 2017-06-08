@@ -27,6 +27,7 @@ parser.add_argument('--ndf', type=int, default=64)
 parser.add_argument('--ntimestep', type=int, default=2, help='number of recursive steps')
 parser.add_argument('--maxobjscale', type=float, default=1.2, help='maximal object size relative to image')
 parser.add_argument('--niter', type=int, default=25, help='number of epochs to train for')
+parser.add_argument('--session', type=int, default=1, help='training session')
 parser.add_argument('--lr', type=float, default=0.0002, help='learning rate, default=0.0002')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
 parser.add_argument('--cuda', type=bool, default=True, help='enables cuda')
@@ -121,12 +122,12 @@ class _netG(nn.Module):
         self.Gfgc, depth_in = self.buildNetGfg(nsize)
         #### define the layer for generating fg image
         self.Gfgi = nn.Sequential(
-            nn.ConvTranspose2d(depth_in, 3, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d(depth_in, 3, 4, 2, 1, bias=True),
             nn.Tanh()
         )
         #### define the layer for generating fg mask
         self.Gfgm = nn.Sequential(
-            nn.ConvTranspose2d(depth_in, 1, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d(depth_in, 1, 4, 2, 1, bias=True),
             nn.Sigmoid()
         )
 
@@ -147,22 +148,22 @@ class _netG(nn.Module):
         net = nn.Sequential()
         size_map = 1
         name = str(size_map)
-        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 8, 4, 1, 0, bias=False))
-        net.add_module('bn' + name, nn.BatchNorm2d(ngf * 8))
+        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 4, 4, 1, 0, bias=True))
+        net.add_module('bn' + name, nn.BatchNorm2d(ngf * 4))
         net.add_module('relu' + name, nn.ReLU(True))
         size_map = 4
-        depth_in = 8 * ngf
-        depth_out = 4 * ngf
+        depth_in = 4 * ngf
+        depth_out = 2 * ngf
         while size_map < nsize / 2:
             name = str(size_map)
-            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=False))
+            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=True))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
             depth_out = max(depth_in / 2, 64)
             size_map = size_map * 2
         name = str(size_map)
-        net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, nc, 4, 2, 1, bias=False))
+        net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, nc, 4, 2, 1, bias=True))
         net.add_module('tanh' + name, nn.Tanh())
         return net
 
@@ -170,7 +171,7 @@ class _netG(nn.Module):
         net = nn.Sequential()
         size_map = 1
         name = str(size_map)
-        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 8, 4, 1, 0, bias=False))
+        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 8, 4, 1, 0, bias=True))
         net.add_module('bn' + name, nn.BatchNorm2d(ngf * 8))
         net.add_module('relu' + name, nn.ReLU(True))
         size_map = 4
@@ -178,7 +179,7 @@ class _netG(nn.Module):
         depth_out = 4 * ngf
         while size_map < nsize / 2:
             name = str(size_map)
-            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=False))
+            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=True))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
@@ -205,15 +206,13 @@ class _netG(nn.Module):
                 fgm = self.Gfgm(fgc)
                 fgt = self.Gtransform(hx) # Nx6
 
-                # bg.data.fill_(0)
-                # fgm.data.fill_(1)
-                # fgi.data.fill_(1)
-                # fgt.select(1, 0).clamp(1.2, 4)
-                # fgt.select(1, 1).clamp(-0.2, 0.2)
-                # fgt.select(1, 2).clamp(-1, 1)
-                # fgt.select(1, 3).clamp(-0.2, 0.2)
-                # fgt.select(1, 4).clamp(1.2, 4)
-                # fgt.select(1, 5).clamp(-1, 1)
+                fgt.select(1, 0).clamp(opt.maxobjscale, 4)
+                fgt.select(1, 1).clamp(-0.2, 0.2)
+                fgt.select(1, 2).clamp(-1, 1)
+                fgt.select(1, 3).clamp(-0.2, 0.2)
+                fgt.select(1, 4).clamp(opt.maxobjscale, 4)
+                fgt.select(1, 5).clamp(-1, 1)
+
                 fgt_view = fgt.contiguous().view(batchSize, 2, 3) # Nx2N3
                 fgg = self.Ggrid(fgt_view)
                 bg4c = bg.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(bg, 1, 2), 2, 3) #
@@ -245,7 +244,7 @@ class _netD(nn.Module):
         size_map = nsize
         while size_map > 4:
             name = str(size_map)
-            net.add_module('conv' + name, nn.Conv2d(depth_in, depth_out, 4, 2, 1, bias=False))
+            net.add_module('conv' + name, nn.Conv2d(depth_in, depth_out, 4, 2, 1, bias=True))
             if size_map < nsize:
                 net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('lrelu' + name, nn.LeakyReLU(0.2, inplace=True))
@@ -253,7 +252,7 @@ class _netD(nn.Module):
             depth_out = 2 * depth_in
             size_map = size_map / 2
         name = str(size_map)
-        net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=False))
+        net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=True))
         net.add_module('sigmoid' + name, nn.Sigmoid())
         return net
 
@@ -289,15 +288,6 @@ if opt.cuda:
     noise, fixed_noise = noise.cuda(), fixed_noise.cuda()
 
 fixed_noise = Variable(fixed_noise)
-
-# noise_all = []
-# fixed_noise_all = []
-# for i in range(ntimestep):
-#     noise_temp = torch.FloatTensor(opt.batchSize, nz, 1, 1)
-#     fixed_noise_temp = torch.FloatTensor(opt.batchSize, nz, 1, 1).normal_(0, 1)
-#     noise_temp, fixed_noise_temp = noise_temp.cuda(), fixed_noise_temp.cuda()
-#     noise_all.append(Variable(noise_temp))
-#     fixed_noise_all.append(Variable(fixed_noise_temp))
 
 # setup optimizer
 optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
@@ -353,14 +343,14 @@ for epoch in range(opt.niter):
             vutils.save_image(real_cpu,
                     '%s/real_samples.png' % opt.outimgf) # normalize=True
             fake, fakeseq, fgimgseq, fgmaskseq = netG(fixed_noise)
-            for i in range(ntimestep):
-                vutils.save_image(fakeseq[i].data,
-                        '%s/fake_samples_t_%01d.png' % (opt.outimgf, i)) # normalize=True
+            for t in range(ntimestep):
+                vutils.save_image(fakeseq[t].data,
+                        '%s/fake_samples_s_%01d_t_%01d.png' % (opt.outimgf, opt.session, t)) # normalize=True
             if ntimestep > 1:
                 vutils.save_image(fgimgseq[0].data,
-                        '%s/fake_samples_t_%01d_fgimg.png' % (opt.outimgf, 1)) # normalize=True
-                vutils.save_image(fgmaskseq[0].data,
-                        '%s/fake_samples_t_%01d_fgmask.png' % (opt.outimgf, 1)) # normalize=True
+                        '%s/fake_samples_s_%01d_t_%01d_fgimg.png' % (opt.outimgf, opt.session, 1)) # normalize=True
+                vutils.save_image(fgmaskseq[0].data.sub_(0.5).div_(0.5),
+                        '%s/fake_samples_s_%01d_t_%01d_fgmask.png' % (opt.outimgf, opt.session, 1)) # normalize=True
             # exit()
 
     # do checkpointing
