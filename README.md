@@ -27,10 +27,18 @@ If you find this code useful, please cite the following paper:
 
 ### Train LR-GAN
 
-Pull this project to your own machine, and then make sure Pytorch is installed successfully. Then, you can try to train the LR-GAN model on the following datasets:
+Pull this project to your own machine, and then make sure Pytorch is installed successfully. Create a folder *datasets* to hold the training sets. Then, you can try to train the LR-GAN model on the following datasets:
 
 1. CIFAR-10. CIFAR-10 is a 32x32 image dataset. We use two timesteps for the generation. The command for training is:
 ```bash
 $ python train.py --dataset cifar10 --dataroot datasets/cifar-10 --ntimestep 2 --imageSize 32 --maxobjscale 1.2 --niter 100 --session 1
 ```
-Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session.
+Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session. Here are some randomly sampled generation results:
+
+2. CUB200. We run on CUB200 in 64x64. Here is the processed dataset. Download it and unzip it into datasets/cub200. Then, run the following command:
+```bash
+$ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --niter 200 --session 1
+```
+
+Here we first try smaller networks whose *ndf* and *ngf* are 64. As consistent to the paper, we train the model for 200 epochs. Below are some randomly (no cherry-picky) generated samples from the model trained for 200 epochs.
+<img src="images/cub200/bgimg.png" width="425"/> <img src="images/cub200/fgimg.png" width="425"/> 
