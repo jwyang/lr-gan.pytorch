@@ -4,9 +4,11 @@
 
 This is the pytorch implementation of our ICLR 2017 paper ["LR-GAN: Layered Recursive Generative Adversarial Networks for Image Generation"](https://arxiv.org/pdf/1703.01560.pdf).
 
-In our paper, we proposed LR-GAN to generate images layer-by-layer recursively considering images naturally have structure and context as shown above. As show below, LR-GAN first generates a background image, and then generates foregrounds with appearance, pose and shape. Afterward, the foregrounds are placed on somewhere of background according to their pose and shape. By this way, LR-GAN can significantly reduce the blending between background and foregrounds. Both the qualitative and quantitative comparisons indicate that LR-GAN could generate better and sharp images than the baseline DCGAN model.
+In our paper, we proposed LR-GAN to generate images layer-by-layer recursively considering images naturally have structure and context. As show below, LR-GAN first generates a background image, and then generates foregrounds with appearance, pose and shape. Afterward, the foregrounds are placed on somewhere of background according to their pose and shape.
 
 <img src="images/pipeline.png" width="700" align="center"/>
+
+By this way, LR-GAN can significantly reduce the blending between background and foregrounds. Both the qualitative and quantitative comparisons indicate that LR-GAN could generate better and sharp images than the baseline DCGAN model.
 
 ### Disclaimer
 
