@@ -40,5 +40,16 @@ Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is th
 $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --niter 200 --session 1
 ```
 
-Here we first try smaller networks whose *ndf* and *ngf* are 64. As consistent to the paper, we train the model for 200 epochs. Below are some randomly (no cherry-picky) generated samples from the model trained for 200 epochs.
-<img src="images/cub200/bgimg.png" width="210"/> <img src="images/cub200/fgimg.png" width="210"/> <img src="images/cub200/fgmask.png" width="210"/> <img src="images/cub200/final.png" width="210"/> 
+We first tried smaller generator and discriminator whose *ngf* and *ndf* are both 64. To keep consistent to our paper, we train the model for 200 epochs. Below are some randomly (without any cherry-picky) generated samples from the model trained for 200 epochs.
+
+<img src="images/cub200/bgimg.png" width="215"/> <img src="images/cub200/fgimg.png" width="215"/> <img src="images/cub200/fgmask.png" width="215"/> <img src="images/cub200/final.png" width="215"/>
+
+Then, we increased *ngf* and *ndf* to 128 as in our paper. In both our Torch version code and this Pytorch version code, we found the training diverged, and initializing BN layer with zero mean (default is 1.0) addressed this issue. The training command is:
+```bash
+$ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --ngf 128 --ndf 128 --niter 200 --session 1
+```
+
+The randomly generated samples are as follow:
+<p
+<img src="images/cub200/bgimg.png" width="215"/> <img src="images/cub200/fgimg.png" width="215"/> <img src="images/cub200/fgmask.png" width="215"/> <img src="images/cub200/final.png" width="215"/>
+/>
