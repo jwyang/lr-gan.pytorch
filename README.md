@@ -37,13 +37,13 @@ If you find this code useful, please cite the following paper:
 
 Pull this project to your own machine, and then make sure Pytorch is installed successfully. Create a folder *datasets* to hold the training sets. Then, you can try to train the LR-GAN model on the following datasets:
 
-1. CIFAR-10. CIFAR-10 is a 32x32 image dataset. We use two timesteps for the generation. The command for training is:
+1. **CIFAR-10**. CIFAR-10 is a 32x32 image dataset. We use two timesteps for the generation. The command for training is:
 ```bash
 $ python train.py --dataset cifar10 --dataroot datasets/cifar-10 --ntimestep 2 --imageSize 32 --maxobjscale 1.2 --niter 100 --session 1
 ```
 Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session. Here are some randomly sampled generation results:
 
-2. CUB200. We run on CUB200 in 64x64. Here is the processed dataset. Download it and unzip it into datasets/cub200. Then, run the following command:
+2. **CUB200**. We run on CUB200 in 64x64. Here is the processed [dataset](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Download it and unzip it into datasets/cub200. Then, run the following command:
 ```bash
 $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --niter 200 --session 1
 ```
@@ -55,7 +55,7 @@ We first tried smaller generator and discriminator whose *ngf* and *ndf* are bot
 </div>
 
 from left to right, they are generated background images, foreground images, foreground masks and final images.
- 
+
 Then, we increased *ngf* and *ndf* to 128 as in our paper. In both our Torch version code and this Pytorch version code, we found the training diverged, and **initializing BN layer with zero mean (default is 1.0) addressed this issue**. Meanwhile, we found more training epochs (300) are needed to train this larger networks. The training command is:
 ```bash
 $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --ngf 128 --ndf 128 --niter 300 --session 1
