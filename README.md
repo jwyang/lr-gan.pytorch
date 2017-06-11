@@ -41,5 +41,4 @@ $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --im
 ```
 
 Here we first try smaller networks whose *ndf* and *ngf* are 64. As consistent to the paper, we train the model for 200 epochs. Below are some randomly (no cherry-picky) generated samples from the model trained for 200 epochs.
-<img src="images/cub200/bgimg.png" width="425"/> <img src="images/cub200/fgimg.png" width="425"/>
-<img src="images/cub200/fgmask.png" width="425"/> <img src="images/cub200/final.png" width="425"/> 
+<img src="images/cub200/bgimg.png" width="210"/> <img src="images/cub200/fgimg.png" width="210"/> <img src="images/cub200/fgmask.png" width="210"/> <img src="images/cub200/final.png" width="210"/> 
