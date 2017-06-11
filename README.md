@@ -50,7 +50,9 @@ $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --im
 
 We first tried smaller generator and discriminator whose *ngf* and *ndf* are both 64. To keep consistent to our paper, we train the model for 200 epochs. Below are some randomly (without any cherry-picky) generated samples from the model trained for 200 epochs.
 
+<div style="color:#0000FF" align="center">
 <img src="images/cub200/bgimg.png" width="215"/> <img src="images/cub200/fgimg.png" width="215"/> <img src="images/cub200/fgmask.png" width="215"/> <img src="images/cub200/final.png" width="215"/>
+</div>
 
 Then, we increased *ngf* and *ndf* to 128 as in our paper. In both our Torch version code and this Pytorch version code, we found the training diverged, and initializing BN layer with zero mean (default is 1.0) addressed this issue. The training command is:
 ```bash
@@ -59,4 +61,6 @@ $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --im
 
 The randomly generated samples are as follow:
 
+<div style="color:#0000FF" align="center">
 <img src="images/cub200/bgimg.png" width="215"/> <img src="images/cub200/fgimg.png" width="215"/> <img src="images/cub200/fgmask.png" width="215"/> <img src="images/cub200/final.png" width="215"/>
+</div>
