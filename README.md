@@ -2,7 +2,11 @@
 
 ### Introduction
 
-This is the pytorch implementation of our ICLR 2017 paper "LR-GAN: Layered Recursive Generative Adversarial Networks for Image Generation". In our paper, we proposed a model to generate images layer-by-layer recursively. LR-GAN first generates a background image, and then generates foregrounds with appearance, pose and shape. Afterward, the foregrounds are placed on somewhere of background according to their pose and shape. By this way, LR-GAN can significantly reduce the blending between background and foregrounds. Both the qualitative and quantitative comparisons indicate that LR-GAN could generate better and sharp images than the baseline DCGAN model.
+This is the pytorch implementation of our ICLR 2017 paper ["LR-GAN: Layered Recursive Generative Adversarial Networks for Image Generation"](https://arxiv.org/pdf/1703.01560.pdf).
+
+In our paper, we proposed LR-GAN to generate images layer-by-layer recursively considering images naturally have structure and context as shown above. As show below, LR-GAN first generates a background image, and then generates foregrounds with appearance, pose and shape. Afterward, the foregrounds are placed on somewhere of background according to their pose and shape. By this way, LR-GAN can significantly reduce the blending between background and foregrounds. Both the qualitative and quantitative comparisons indicate that LR-GAN could generate better and sharp images than the baseline DCGAN model.
+
+<img src="images/pipeline.png" width="430"/>
 
 ### Disclaimer
 
@@ -50,6 +54,5 @@ $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --im
 ```
 
 The randomly generated samples are as follow:
-<p
+
 <img src="images/cub200/bgimg.png" width="215"/> <img src="images/cub200/fgimg.png" width="215"/> <img src="images/cub200/fgmask.png" width="215"/> <img src="images/cub200/final.png" width="215"/>
-/>
