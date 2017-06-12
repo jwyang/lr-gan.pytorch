@@ -41,7 +41,7 @@ Pull this project to your own machine, and then make sure Pytorch is installed s
 ```bash
 $ python train.py --dataset cifar10 --dataroot datasets/cifar-10 --ntimestep 2 --imageSize 32 --maxobjscale 1.2 --niter 100 --session 1
 ```
-Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session. Here are some randomly sampled generation results:
+Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session. Here are some randomly sampled generation results (no cherry-pick):
 
 <div style="color:#0000FF" align="center">
 <img src="images/cifar-10/bgimg.png" width="215"/> <img src="images/cifar-10/fgimg.png" width="215"/> <img src="images/cifar-10/fgmask.png" width="215"/> <img src="images/cifar-10/final.png" width="215"/>
@@ -52,7 +52,7 @@ Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is th
 $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --niter 200 --session 1
 ```
 
-We first tried smaller generator and discriminator whose *ngf* and *ndf* are both 64. To keep consistent to our paper, we train the model for 200 epochs. Below are some randomly (without any cherry-pick) generated samples from the model trained for 200 epochs.
+We first tried smaller generator and discriminator whose *ngf* and *ndf* are both 64. To keep consistent to our paper, we train the model for 200 epochs. Below are some randomly (no cherry-pick) generated samples from the model trained for 200 epochs.
 
 <div style="color:#0000FF" align="center">
 <img src="images/cub200/bgimg.png" width="215"/> <img src="images/cub200/fgimg.png" width="215"/> <img src="images/cub200/fgmask.png" width="215"/> <img src="images/cub200/final.png" width="215"/>
@@ -60,12 +60,12 @@ We first tried smaller generator and discriminator whose *ngf* and *ndf* are bot
 
 From left to right, they are generated background images, foreground images, foreground masks and final images.
 
-Then, we increased *ngf* and *ndf* to 128 as in our paper. In both our Torch version code and this Pytorch version code, we found the training diverged, and **initializing BN layer with zero mean (default is 1.0) addressed this issue**. Meanwhile, we found more training epochs (300) are needed to train this larger networks. The training command is:
+Then, we increased *ngf* and *ndf* to 128 as in our paper. In both our Torch version code and this Pytorch version code, we found the training diverged, and **initializing BN layer with zero mean (default is 1.0) addressed this issue**. The training command is:
 ```bash
-$ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --ngf 128 --ndf 128 --niter 300 --session 1
+$ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --ngf 128 --ndf 128 --niter 200 --session 1
 ```
 
-The randomly generated samples are as follow:
+We found the model generated best results on epoch=180 generally, and the randomly generated samples (no cherry-pick) are as follow:
 
 <div style="color:#0000FF" align="center">
 <img src="images/cub200/bgimg_128.png" width="215"/> <img src="images/cub200/fgimg_128.png" width="215"/> <img src="images/cub200/fgmask_128.png" width="215"/> <img src="images/cub200/final_128.png" width="215"/>
