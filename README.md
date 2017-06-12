@@ -45,7 +45,7 @@ $ python train.py --dataset mnist-one --dataroot datasets/mnist-one --ntimestep 
 Below are randomly generation results using trained model:
 
 <div style="color:#0000FF" align="center">
-<img src="images/cifar-10/bgimg.png" width="215"/> <img src="images/cifar-10/fgimg.png" width="215"/> <img src="images/cifar-10/fgmask.png" width="215"/> <img src="images/cifar-10/final.png" width="215"/>
+<img src="images/mnist-one/bgimg.png" width="215"/> <img src="images/mnist-one/fgimg.png" width="215"/> <img src="images/mnist-one/fgmask.png" width="215"/> <img src="images/mnist-one/final.png" width="215"/>
 </div>
 
 2. **CUB200**. We run on CUB200 in 64x64. Here is the processed [dataset](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Download it and unzip it into datasets/cub200. Then, run the following command:
@@ -56,7 +56,7 @@ $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --im
 We first tried smaller generator and discriminator whose *ngf* and *ndf* are both 64. To keep consistent to our paper, we train the model for 200 epochs. Below are some randomly (no cherry-pick) generated samples from the model trained for 200 epochs.
 
 <div style="color:#0000FF" align="center">
-<img src="images/mnist-one/bgimg.png" width="215"/> <img src="images/mnist-one/fgimg.png" width="215"/> <img src="images/mnist-one/fgmask.png" width="215"/> <img src="images/mnist-one/final.png" width="215"/>
+<img src="images/cub200/bgimg.png" width="215"/> <img src="images/cub200/fgimg.png" width="215"/> <img src="images/cub200/fgmask.png" width="215"/> <img src="images/cub200/final.png" width="215"/>
 </div>
 
 Similarly, from left to right, they are generated background images, foreground images, foreground masks and final images.
