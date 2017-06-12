@@ -72,3 +72,5 @@ We found the model generated best results on epoch=180 generally, and the random
 <div style="color:#0000FF" align="center">
 <img src="images/cub200/bgimg_128.png" width="215"/> <img src="images/cub200/fgimg_128.png" width="215"/> <img src="images/cub200/fgmask_128.png" width="215"/> <img src="images/cub200/final_128.png" width="215"/>
 </div>
+
+From the generation results of smaller networks (*ndf=ngf=64*) and larger networks (*ndf=ngf=128*), we actually do find much difference.
