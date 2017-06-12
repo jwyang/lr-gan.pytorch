@@ -48,6 +48,8 @@ Below are randomly generation results using trained model:
 <img src="images/mnist-one/bgimg.png" width="215"/> <img src="images/mnist-one/fgimg.png" width="215"/> <img src="images/mnist-one/fgmask.png" width="215"/> <img src="images/mnist-one/final.png" width="215"/>
 </div>
 
+From left to right, they are generated background images, foreground images, foreground masks and final images.
+
 2. **CUB200**. We run on CUB200 in 64x64. Here is the processed [dataset](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Download it and unzip it into datasets/cub200. Then, run the following command:
 ```bash
 $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --niter 200 --session 1
