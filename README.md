@@ -37,19 +37,7 @@ If you find this code useful, please cite the following paper:
 
 Pull this project to your own machine, and then make sure Pytorch is installed successfully. Create a folder *datasets* to hold the training sets. Then, you can try to train the LR-GAN model on the following datasets:
 
-1. **CIFAR-10**. CIFAR-10 is a 32x32 image dataset. We use two timesteps for the generation. The command for training is:
-```bash
-$ python train.py --dataset cifar10 --dataroot datasets/cifar-10 --ntimestep 2 --imageSize 32 --maxobjscale 1.2 --niter 100 --session 1
-```
-Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session. Here are some randomly sampled generation results (no cherry-pick):
-
-<div style="color:#0000FF" align="center">
-<img src="images/cifar-10/bgimg.png" width="215"/> <img src="images/cifar-10/fgimg.png" width="215"/> <img src="images/cifar-10/fgmask.png" width="215"/> <img src="images/cifar-10/final.png" width="215"/>
-</div>
-
-From left to right, they are generated background images, foreground images, foreground masks and final images. We can clearly find some horse-shape, bird-shape and boat-shape masks generated, and the finally generated images are more sharper.
-
-2. **CUB200**. We run on CUB200 in 64x64. Here is the processed [dataset](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Download it and unzip it into datasets/cub200. Then, run the following command:
+1. **CUB200**. We run on CUB200 in 64x64. Here is the processed [dataset](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Download it and unzip it into datasets/cub200. Then, run the following command:
 ```bash
 $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --niter 200 --session 1
 ```
@@ -74,3 +62,15 @@ We found the model generated best results on epoch=180 generally, and the random
 </div>
 
 From the generation results of smaller networks (*ndf=ngf=64*) and larger networks (*ndf=ngf=128*), we actually do not find many differences. The smaller networks seems have enough capacity for generating 64x64 bird images, and the training time for larger networks become longer.
+
+2. **CIFAR-10**. CIFAR-10 is a 32x32 image dataset. We use two timesteps for the generation. The command for training is:
+```bash
+$ python train.py --dataset cifar10 --dataroot datasets/cifar-10 --ntimestep 2 --imageSize 32 --maxobjscale 1.2 --niter 100 --session 1
+```
+Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session. Here are some randomly sampled generation results (no cherry-pick):
+
+<div style="color:#0000FF" align="center">
+<img src="images/cifar-10/bgimg.png" width="215"/> <img src="images/cifar-10/fgimg.png" width="215"/> <img src="images/cifar-10/fgmask.png" width="215"/> <img src="images/cifar-10/final.png" width="215"/>
+</div>
+
+From left to right, they are generated background images, foreground images, foreground masks and final images. We can clearly find some horse-shape, bird-shape and boat-shape masks generated, and the finally generated images are more sharper.
