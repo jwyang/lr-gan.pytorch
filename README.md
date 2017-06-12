@@ -47,6 +47,8 @@ Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is th
 <img src="images/cifar-10/bgimg.png" width="215"/> <img src="images/cifar-10/fgimg.png" width="215"/> <img src="images/cifar-10/fgmask.png" width="215"/> <img src="images/cifar-10/final.png" width="215"/>
 </div>
 
+From left to right, they are generated background images, foreground images, foreground masks and final images. We can clearly find some horse-shape, bird-shape and boat-shape masks generated, and the finally generated images are more sharper.
+
 2. **CUB200**. We run on CUB200 in 64x64. Here is the processed [dataset](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Download it and unzip it into datasets/cub200. Then, run the following command:
 ```bash
 $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --niter 200 --session 1
@@ -58,7 +60,7 @@ We first tried smaller generator and discriminator whose *ngf* and *ndf* are bot
 <img src="images/cub200/bgimg.png" width="215"/> <img src="images/cub200/fgimg.png" width="215"/> <img src="images/cub200/fgmask.png" width="215"/> <img src="images/cub200/final.png" width="215"/>
 </div>
 
-From left to right, they are generated background images, foreground images, foreground masks and final images.
+Similarly, from left to right, they are generated background images, foreground images, foreground masks and final images.
 
 Then, we increased *ngf* and *ndf* to 128 as in our paper. In both our Torch version code and this Pytorch version code, we found the training diverged, and **initializing BN layer with zero mean (default is 1.0) addressed this issue**. The training command is:
 ```bash
