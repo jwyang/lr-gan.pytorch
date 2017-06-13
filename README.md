@@ -71,7 +71,7 @@ The layout is similar to MNIST-ONE. As we an see, the generator generated bird-s
 ```bash
 $ python train.py --dataset cifar10 --dataroot datasets/cifar-10 --ntimestep 2 --imageSize 32 --maxobjscale 1.2 --niter 100 --session 1
 ```
-Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session. Here are some randomly sampled generation results (no cherry-pick):
+Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session. Here are some randomly sampled generation results:
 
 <div style="color:#0000FF" align="center">
 <img src="images/cifar-10/bgimg.png" width="215"/> <img src="images/cifar-10/fgimg.png" width="215"/> <img src="images/cifar-10/fgmask.png" width="215"/> <img src="images/cifar-10/final.png" width="215"/>
