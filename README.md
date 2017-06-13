@@ -42,7 +42,7 @@ Pull this project to your own machine, and then make sure Pytorch is installed s
 $ python train.py --dataset mnist-one --dataroot datasets/mnist-one --ntimestep 2 --imageSize 32 --maxobjscale 1.2 --niter 50 --session 1
 ```
 
-Below are randomly generation results using trained model:
+Below are randomly generation results using trained model in epoch 50:
 
 <div style="color:#0000FF" align="center">
 <img src="images/mnist-one/bgimg.png" width="215"/> <img src="images/mnist-one/fgimg.png" width="215"/> <img src="images/mnist-one/fgmask.png" width="215"/> <img src="images/mnist-one/final.png" width="215"/>
@@ -55,7 +55,13 @@ From left to right, they are generated background images, foreground images, for
 $ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --niter 200 --session 1
 ```
 
-We first tried smaller generator and discriminator whose *ngf* and *ndf* are both 64. To keep consistent to our paper, we train the model for 200 epochs. Below are some randomly (no cherry-pick) generated samples from the model trained for 200 epochs.
+Based on above command, we obtained the model same to the one in our paper. Below are randomly generated images:
+
+<div style="color:#0000FF" align="center">
+<img src="images/cub200/bgimg_128_full.png" width="215"/> <img src="images/cub200/fgimg_128_full.png" width="215"/> <img src="images/cub200/fgmask_128_full.png" width="215"/> <img src="images/cub200/final_128_full.png" width="215"/>
+</div>
+
+Since birds all locate in the center of the images, we also tried to fix the object scale to 1.2. We first tried smaller generator and discriminator whose *ngf* and *ndf* are both 64. To keep consistent to our paper, we train the model for 200 epochs. Below are some randomly (no cherry-pick) generated samples from the model trained for 200 epochs.
 
 <div style="color:#0000FF" align="center">
 <img src="images/cub200/bgimg.png" width="215"/> <img src="images/cub200/fgimg.png" width="215"/> <img src="images/cub200/fgmask.png" width="215"/> <img src="images/cub200/final.png" width="215"/>
