@@ -56,7 +56,7 @@ From left to right, they are generated background images, foreground images, for
 
 2. **CUB200**. We run on CUB200 in 64x64. Here is the processed [dataset](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Download it and unzip it into datasets/cub200. Then, run the following command:
 ```bash
-$ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --niter 200 --session 1
+$ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --ndf 128 --ngf 128 --maxobjscale 1.2 --niter 200 --session 1
 ```
 
 Based on above command, we obtained the model same to the one in our paper. Below are randomly generated images:
@@ -65,26 +65,7 @@ Based on above command, we obtained the model same to the one in our paper. Belo
 <img src="images/cub200/bgimg_128_full.png" width="215"/> <img src="images/cub200/fgimg_128_full.png" width="215"/> <img src="images/cub200/fgmask_128_full.png" width="215"/> <img src="images/cub200/final_128_full.png" width="215"/>
 </div>
 
-Since birds all locate in the center of the images, we also tried to fix the object scale to 1.2. We first tried smaller generator and discriminator whose *ngf* and *ndf* are both 64. To keep consistent to our paper, we train the model for 200 epochs. Below are some randomly (no cherry-pick) generated samples from the model trained for 200 epochs.
-
-<div style="color:#0000FF" align="center">
-<img src="images/cub200/bgimg.png" width="215"/> <img src="images/cub200/fgimg.png" width="215"/> <img src="images/cub200/fgmask.png" width="215"/> <img src="images/cub200/final.png" width="215"/>
-</div>
-
-Similarly, from left to right, they are generated background images, foreground images, foreground masks and final images.
-
-Then, we increased *ngf* and *ndf* to 128 as in our paper. In both our Torch version code and this Pytorch version code, we found the training diverged, and **initializing BN layer with zero mean (default is 1.0) addressed this issue**. The training command is:
-```bash
-$ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --maxobjscale 1.2 --ngf 128 --ndf 128 --niter 200 --session 1
-```
-
-We found the model generated best results on epoch=180 generally, and the randomly generated samples (no cherry-pick) are as follow:
-
-<div style="color:#0000FF" align="center">
-<img src="images/cub200/bgimg_128.png" width="215"/> <img src="images/cub200/fgimg_128.png" width="215"/> <img src="images/cub200/fgmask_128.png" width="215"/> <img src="images/cub200/final_128.png" width="215"/>
-</div>
-
-From the generation results of smaller networks (*ndf=ngf=64*) and larger networks (*ndf=ngf=128*), we actually do not find many differences. The smaller networks seems have enough capacity for generating 64x64 bird images, and the training time for larger networks become longer.
+The layout is similar to MNIST-ONE. As we an see, the generator generated bird-shape masks, and thus make the final images sharper and cleaner.
 
 3. **CIFAR-10**. CIFAR-10 is a 32x32 image dataset. We use two timesteps for the generation. The command for training is:
 ```bash
