@@ -55,8 +55,7 @@ class AffineGridGenFunction(Function):
         grad_output_temp.contiguous()
         batchgrid_temp = self.batchgrid.view(-1, self.height*self.width, 3)
         batchgrid_temp.contiguous()
-        grad_input1.baddbmm(grad_output_temp, batchgrid_temp)
-        #print(grad_input1)
+        grad_input1 = torch.baddbmm(grad_input1, grad_output_temp, batchgrid_temp)
         return grad_input1
 
 class CylinderGridGenFunction(Function):
