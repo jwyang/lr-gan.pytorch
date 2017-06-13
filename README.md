@@ -35,10 +35,10 @@ If you find this code useful, please cite the following paper:
 
 ### Train LR-GAN
 
-Pull this project to your own machine, and then make sure Pytorch is installed successfully. Create a folder *datasets* to hold the training sets. Then, you can try to train the LR-GAN model on the datasets: 1) MNIST-ONE; 2) CUB-200; 3) CIFAR-10. The sample images are shown below:
+Pull this project to your own machine, and then make sure Pytorch is installed successfully. Create a folder *datasets* to hold the training sets. Then, you can try to train the LR-GAN model on the datasets: 1) MNIST-ONE; 2) MNIST-TWO; 3) CUB-200; 4) CIFAR-10. The sample images are shown below:
 
 <div style="color:#0000FF" align="center">
-<img src="images/mnist-one/realimg.png" width="250"/> <img src="images/cub200/realimg.png" width="250"/> <img src="images/cifar-10/realimg.png" width="250"/>
+<img src="images/mnist-one/realimg.png" width="215"/> <img src="images/mnist-one/realimg.png" width="215"/> <img src="images/cub200/realimg.png" width="215"/> <img src="images/cifar-10/realimg.png" width="215"/>
 </div>
 
 1. **MNIST-ONE**. We first run experiments on MNIST-ONE, which can be downloaded from [here](https://filebox.ece.vt.edu/~jw2yang/datasets/mnist-one.tgz). Run the following command:
