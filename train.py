@@ -254,29 +254,6 @@ class _netG(nn.Module):
                 fgi = self.Gfgi(fgc)
                 fgm = self.Gfgm(fgc)
                 fgt = self.Gtransform(hx) # Nx6
-
-                x_s = fgt.select(1, 0)
-                x_r = fgt.select(1, 1)
-                x_t = fgt.select(1, 2)
-                y_r = fgt.select(1, 3)
-                y_s = fgt.select(1, 4)
-                y_t = fgt.select(1, 5)
-                #
-                # x_s_clamp = torch.unsqueeze(x_s.clamp(opt.maxobjscale, 4), 1)
-                # x_r_clmap = torch.unsqueeze(x_r.clamp(-0.2, 0.2), 1)
-                # x_t_clmap = torch.unsqueeze(x_t.clamp(-1, 1), 1)
-                #
-                # y_s_clamp = torch.unsqueeze(y_s.clamp(opt.maxobjscale, 4), 1)
-                # y_r_clamp = torch.unsqueeze(y_r.clamp(-0.2, 0.2), 1)
-                # y_t_clamp = torch.unsqueeze(y_t.clamp(-1, 1), 1)
-                #
-                # fgt_clamp = torch.cat([x_s_clamp, x_r_clmap, x_t_clmap, y_r_clamp, y_s_clamp, y_t_clamp], 1)
-
-                print(torch.min(x_r))
-                print(torch.max(x_r))
-                print(torch.min(y_r))
-                print(torch.max(y_r))
-                exit()
                 fgt_clamp = self.clampT(fgt)
                 fgt_view = fgt_clamp.contiguous().view(batchSize, 2, 3) # Nx2N3
                 fgg = self.Ggrid(fgt_view)
