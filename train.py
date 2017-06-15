@@ -89,6 +89,7 @@ elif opt.dataset == 'cifar10':
                            ])
     )
     checkfreq = 100
+    nc = 3
 elif opt.dataset == 'cub200':
     trans = transforms.Compose([
         transforms.Scale(opt.imageSize),
@@ -97,6 +98,7 @@ elif opt.dataset == 'cub200':
     ])
     dataset = dset.ImageFolder('datasets/cub200/images', transform = trans)
     checkfreq = 40
+    nc = 3
 elif opt.dataset == 'mnist-one':
     trans = transforms.Compose([
         transforms.Scale(opt.imageSize),
@@ -105,6 +107,7 @@ elif opt.dataset == 'mnist-one':
     ])
     dataset = dset.ImageFolder('datasets/mnist-one/images', transform = trans)
     checkfreq = 100
+    nc = 1
 elif opt.dataset == 'mnist-two':
     trans = transforms.Compose([
         transforms.Scale(opt.imageSize),
@@ -113,6 +116,7 @@ elif opt.dataset == 'mnist-two':
     ])
     dataset = dset.ImageFolder('datasets/mnist-two/images', transform = trans)
     checkfreq = 100
+    nc = 1
 assert dataset
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batchSize,
                                          shuffle=True, num_workers=int(opt.workers))
@@ -123,13 +127,13 @@ ngf = int(opt.ngf)
 ndf = int(opt.ndf)
 nsize = int(opt.imageSize)
 ntimestep = int(opt.ntimestep)
-nc = 3
 
 # custom weights initialization called on netG and netD
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
         m.weight.data.normal_(0.0, 0.02)
+        m.bias.data.fill_(0)
     elif classname.find('BatchNorm') != -1:
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
@@ -138,24 +142,27 @@ class _netG(nn.Module):
     def __init__(self, ngpu, nsize):
         super(_netG, self).__init__()
         self.ngpu = ngpu
-
+        self.nsize_out = 2
         # define recurrent net for processing input random noise
         self.lstmcell = nn.LSTMCell(nz, nz)
 
         # define background generator G_bg
-        self.Gbg = self.buildNetGbg(nsize)
-
+        self.Gbgc, self.depth_in_bg = self.buildNetGbg(nsize)
+        self.Gbgi = nn.Sequential(
+            nn.ConvTranspose2d(self.depth_in_bg, nc, 4, 2, 1, bias=True),
+            nn.Tanh()
+        )
         # define foreground generator G_fg
         #### define the common part
-        self.Gfgc, depth_in = self.buildNetGfg(nsize)
+        self.Gfgc, self.depth_in = self.buildNetGfg(nsize)
         #### define the layer for generating fg image
         self.Gfgi = nn.Sequential(
-            nn.ConvTranspose2d(depth_in, 3, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d(self.depth_in, nc, 4, 2, 1, bias=True),
             nn.Tanh()
         )
         #### define the layer for generating fg mask
         self.Gfgm = nn.Sequential(
-            nn.ConvTranspose2d(depth_in, 1, 4, 2, 1, bias=True),
+            nn.ConvTranspose2d(self.depth_in, 1, 4, 2, 1, bias=True),
             nn.Sigmoid()
         )
 
@@ -167,16 +174,27 @@ class _netG(nn.Module):
         self.Gtransform.bias.data[0] = opt.maxobjscale
         self.Gtransform.bias.data[4] = opt.maxobjscale
 
+        # define grid generator
         self.Ggrid = AffineGridGen(nsize, nsize, aux_loss = False)
 
-        # define compositor
-        self.Compositor = STNM()
+        # define compsitor
+        self.Compositors = []
+        for t in range(ntimestep - 1):
+            self.Compositors.append(STNM())
+
+        # define encoder when ntimestep > 2
+        self.encoderconv = self.buildEncoderConv(self.depth_in, nsize / 2, self.nsize_out)
+        self.encoderfc = self.buildEncoderFC(self.depth_in, self.nsize_out, nz)
+        self.nlnet = nn.Sequential(
+            nn.Linear(nz + nz, nz),
+            nn.Tanh()
+        )
 
     def buildNetGbg(self, nsize): # take vector as input, and outout bgimg
         net = nn.Sequential()
         size_map = 1
         name = str(size_map)
-        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 4, 4, 4, 0, bias=False))
+        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 4, 4, 4, 0, bias=True))
         net.add_module('bn' + name, nn.BatchNorm2d(ngf * 4))
         net.add_module('relu' + name, nn.ReLU(True))
         size_map = 4
@@ -184,22 +202,19 @@ class _netG(nn.Module):
         depth_out = 2 * ngf
         while size_map < nsize / 2:
             name = str(size_map)
-            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=False))
+            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=True))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
             depth_out = max(depth_in / 2, 64)
             size_map = size_map * 2
-        name = str(size_map)
-        net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, nc, 4, 2, 1, bias=False))
-        net.add_module('tanh' + name, nn.Tanh())
-        return net
+        return net, depth_in
 
     def buildNetGfg(self, nsize): # take vector as input, and output fgimg and fgmask
         net = nn.Sequential()
         size_map = 1
         name = str(size_map)
-        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 8, 4, 4, 0, bias=False))
+        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 8, 4, 4, 0, bias=True))
         net.add_module('bn' + name, nn.BatchNorm2d(ngf * 8))
         net.add_module('relu' + name, nn.ReLU(True))
         size_map = 4
@@ -207,13 +222,32 @@ class _netG(nn.Module):
         depth_out = 4 * ngf
         while size_map < nsize / 2:
             name = str(size_map)
-            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=False))
+            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=True))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
             depth_out = max(depth_in / 2, 64)
             size_map = size_map * 2
         return net, depth_in
+
+    def buildEncoderConv(self, depth_in, nsize_in, nsize_out):
+        net = nn.Sequential()
+        nsize_i = nsize_in
+        while nsize_i > nsize_out:
+            name = str(nsize_i)
+            net.add_module('avgpool' + name, nn.AvgPool2d(4, 2, 1))
+            net.add_module('bn' + name, nn.BatchNorm2d(depth_in))
+            net.add_module('lrelu' + name, nn.LeakyReLU(0.2, inplace=True))
+            nsize_i = nsize_i / 2
+        return net
+
+    def buildEncoderFC(self, depth_in, nsize_in, out_dim):
+        net = nn.Sequential(
+            nn.Linear(depth_in * nsize_in * nsize_in, out_dim),
+            nn.BatchNorm1d(out_dim)
+            # nn.Tanh()
+        )
+        return net
 
     def clampT(self, Tin):
         x_s = Tin.select(1, 0)
@@ -225,10 +259,10 @@ class _netG(nn.Module):
         y_t = Tin.select(1, 5)
 
         x_s_clamp = torch.unsqueeze(x_s.clamp(opt.maxobjscale, 4), 1)
-        x_r_clmap = torch.unsqueeze(x_r, 1)
+        x_r_clmap = torch.unsqueeze(x_r.clamp(-0.3, 0.3), 1)
         x_t_clmap = torch.unsqueeze(x_t.clamp(-1, 1), 1)
 
-        y_r_clamp = torch.unsqueeze(y_r, 1)
+        y_r_clamp = torch.unsqueeze(y_r.clamp(-0.3, 0.3), 1)
         y_s_clamp = torch.unsqueeze(y_s.clamp(opt.maxobjscale, 4), 1)
         y_t_clamp = torch.unsqueeze(y_t.clamp(-1, 1), 1)
 
@@ -246,23 +280,47 @@ class _netG(nn.Module):
             hx, cx = self.lstmcell(input[i], (hx, cx))
             hx_view = hx.contiguous().view(batchSize, nz, 1, 1)
             if i == 0:
+                # We send input vector to background generator to make it
+                # equivalent to DCGAN when ntimestep is 1.
                 input_view = input[i].view(batchSize, nz, 1, 1)
-                canvas = self.Gbg(input_view)
+                bgc = self.Gbgc(input_view)
+                canvas = self.Gbgi(bgc)
                 outputsT.append(canvas)
             else:
-                fgc = self.Gfgc(hx_view)
+                if ntimestep > 2 and i == 1:
+                    encConv = self.encoderconv(bgc)
+                    encConv_view = encConv.view(batchSize, self.depth_in * self.nsize_out * self.nsize_out)
+                    encFC = self.encoderfc(encConv_view)
+                    concat = torch.cat([hx, encFC], 1)
+                    comb = self.nlnet(concat)
+                    input4g = comb
+                    input4g_view = input4g.contiguous().view(batchSize, nz, 1, 1)
+                elif ntimestep > 2 and i > 1:
+                    encConv = self.encoderconv(fgc)
+                    encConv_view = encConv.view(batchSize, self.depth_in * self.nsize_out * self.nsize_out)
+                    encFC = self.encoderfc(encConv_view)
+                    concat = torch.cat([hx, encFC], 1)
+                    comb = self.nlnet(concat)
+                    input4g = comb
+                    input4g_view = input4g.contiguous().view(batchSize, nz, 1, 1)
+                else:
+                    input4g = hx
+                    input4g_view = hx_view
+
+                fgc = self.Gfgc(input4g_view)
                 fgi = self.Gfgi(fgc)
                 fgm = self.Gfgm(fgc)
-                fgt = self.Gtransform(hx) # Nx6
+
+                fgt = self.Gtransform(input4g) # Nx6
                 fgt_clamp = self.clampT(fgt)
                 fgt_view = fgt_clamp.contiguous().view(batchSize, 2, 3) # Nx2N3
                 fgg = self.Ggrid(fgt_view)
                 canvas4c = canvas.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(bg, 1, 2), 2, 3) #
                 fgi4c = fgi.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(fgi, 1, 2), 2, 3) #
                 fgm4c = fgm.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(fgm, 1, 2), 2, 3) #
-                temp = self.Compositor(canvas4c, fgi4c, fgg, fgm4c)
-                convas = temp.permute(0, 3, 1, 2).contiguous() # torch.transpose(torch.transpose(temp, 2, 3), 1, 2) #
-                outputsT.append(convas)
+                temp = self.Compositors[i - 1](canvas4c, fgi4c, fgg, fgm4c)
+                canvas = temp.permute(0, 3, 1, 2).contiguous() # torch.transpose(torch.transpose(temp, 2, 3), 1, 2) #
+                outputsT.append(canvas)
                 fgimgsT.append(fgi)
                 fgmaskT.append(fgm)
         return outputsT[ntimestep - 1], outputsT, fgimgsT, fgmaskT
@@ -270,7 +328,7 @@ class _netG(nn.Module):
 netG = _netG(ngpu, nsize)
 # For smaller network, initialize BN as usual
 # For larger network, initialize BN with zero mean
-# if opt.ngf <= 64:
+# The later case works for both, so we commet the initializzaton
 # netG.apply(weights_init)
 if opt.netG != '':
     netG.load_state_dict(torch.load(opt.netG))
@@ -289,7 +347,7 @@ class _netD(nn.Module):
         size_map = nsize
         while size_map > 4:
             name = str(size_map)
-            net.add_module('conv' + name, nn.Conv2d(depth_in, depth_out, 4, 2, 1, bias=False))
+            net.add_module('conv' + name, nn.Conv2d(depth_in, depth_out, 4, 2, 1, bias=True))
             if size_map < nsize:
                 net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('lrelu' + name, nn.LeakyReLU(0.2, inplace=True))
@@ -297,7 +355,7 @@ class _netD(nn.Module):
             depth_out = 2 * depth_in
             size_map = size_map / 2
         name = str(size_map)
-        net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=False))
+        net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=True))
         net.add_module('sigmoid' + name, nn.Sigmoid())
         return net
 
@@ -313,7 +371,7 @@ class _netD(nn.Module):
 netD = _netD(ngpu, nsize)
 # For smaller network, initialize BN as usual
 # For larger network, initialize BN with zero mean
-# if opt.ndf <= 64:
+# The later case works for both, so we commet the initializzaton
 # netD.apply(weights_init)
 if opt.netD != '':
     netD.load_state_dict(torch.load(opt.netD))
@@ -321,7 +379,7 @@ print(netD)
 
 criterion = nn.BCELoss()
 
-input = torch.FloatTensor(opt.batchSize, 3, opt.imageSize, opt.imageSize)
+input = torch.FloatTensor(opt.batchSize, nc, opt.imageSize, opt.imageSize)
 noise = torch.FloatTensor(ntimestep, opt.batchSize, nz)
 fixed_noise = torch.FloatTensor(ntimestep, opt.batchSize, nz).normal_(0, 1)
 label = torch.FloatTensor(opt.batchSize)
@@ -352,6 +410,7 @@ for epoch in range(opt.epoch_s, opt.niter):
         batch_size = real_cpu.size(0)
         if opt.cuda:
             real_cpu = real_cpu.cuda()
+        real_cpu = torch.mean(real_cpu, 1)
         input.resize_as_(real_cpu).copy_(real_cpu)
         label.resize_(batch_size).fill_(real_label)
         inputv = Variable(input)
@@ -404,5 +463,5 @@ for epoch in range(opt.epoch_s, opt.niter):
 
     # do checkpointing
     if epoch % 5 == 0:
-        torch.save(netG.state_dict(), '/srv/share/jyang375/%s/%s_netG_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
-        torch.save(netD.state_dict(), '/srv/share/jyang375/%s/%s_netD_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
+        torch.save(netG.state_dict(), '%s/%s_netG_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
+        torch.save(netD.state_dict(), '%s/%s_netD_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
