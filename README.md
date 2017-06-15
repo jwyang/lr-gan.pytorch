@@ -43,7 +43,14 @@ Pull this project to your own machine, and then make sure Pytorch is installed s
 
 1. **MNIST-ONE**. We first run experiments on MNIST-ONE, which can be downloaded from [here](https://filebox.ece.vt.edu/~jw2yang/datasets/mnist-one.tgz). Run the following command:
 ```bash
-$ python train.py --dataset mnist-one --dataroot datasets/mnist-one --ntimestep 2 --imageSize 32 --maxobjscale 1.2 --niter 50 --session 1
+$ python train.py \
+      --dataset mnist-one \
+      --dataroot datasets/mnist-one \
+      --ntimestep 2 \
+      --imageSize 32 \
+      --maxobjscale 1.2 \
+      --niter 50 \
+      --session 1
 ```
 
 Below are randomly generation results using trained model in epoch 50:
@@ -56,7 +63,16 @@ From left to right, they are generated background images, foreground images, for
 
 2. **CUB200**. We run on CUB200 in 64x64. Here is the processed [dataset](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Download it and unzip it into datasets/cub200. Then, run the following command:
 ```bash
-$ python train.py --dataset cub200 --dataroot datasets/cub200 --ntimestep 2 --imageSize 64 --ndf 128 --ngf 128 --maxobjscale 1.2 --niter 200 --session 1
+$ python train.py \
+      --dataset cub200 \
+      --dataroot datasets/cub200 \
+      --ntimestep 2 \
+      --imageSize 64 \
+      --ndf 128 \
+      --ngf 128 \
+      --maxobjscale 1.2 \
+      --niter 200 \
+      --session 1
 ```
 
 Based on above command, we obtained the model same to the one in our paper. Below are randomly generated images:
@@ -69,7 +85,14 @@ The layout is similar to MNIST-ONE. As we an see, the generator generated bird-s
 
 3. **CIFAR-10**. CIFAR-10 is a 32x32 image dataset. We use two timesteps for the generation. The command for training is:
 ```bash
-$ python train.py --dataset cifar10 --dataroot datasets/cifar-10 --ntimestep 2 --imageSize 32 --maxobjscale 1.2 --niter 100 --session 1
+$ python train.py \
+      --dataset cifar10 \
+      --dataroot datasets/cifar-10 \
+      --ntimestep 2 \
+      --imageSize 32 \
+      --maxobjscale 1.2 \
+      --niter 100 \
+      --session 1
 ```
 Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session. Here are some randomly sampled generation results:
 
