@@ -61,7 +61,19 @@ Below are randomly generation results using trained model in epoch 50:
 
 From left to right, they are generated background images, foreground images, foreground masks and final images.
 
-2. **CUB200**. We run on CUB200 in 64x64. Here is the processed [dataset](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Download it and unzip it into datasets/cub200. Then, run the following command:
+2. **MNIST-TWO**. The images are 64x64 and contain two digits. We train the model using the following command:
+```bash
+$ python train.py \
+      --dataset mnist-two \
+      --dataroot datasets/mnist-two \
+      --ntimestep 3 \
+      --imageSize 64 \
+      --maxobjscale 2 \
+      --niter 50 \
+      --session 1
+```
+
+3. **CUB200**. We run on CUB200 in 64x64. Here is the processed [dataset](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Download it and unzip it into datasets/cub200. Then, run the following command:
 ```bash
 $ python train.py \
       --dataset cub200 \
@@ -83,7 +95,7 @@ Based on above command, we obtained the model same to the one in our paper. Belo
 
 The layout is similar to MNIST-ONE. As we an see, the generator generated bird-shape masks, and thus make the final images sharper and cleaner.
 
-3. **CIFAR-10**. CIFAR-10 is a 32x32 image dataset. We use two timesteps for the generation. The command for training is:
+4. **CIFAR-10**. CIFAR-10 is a 32x32 image dataset. We use two timesteps for the generation. The command for training is:
 ```bash
 $ python train.py \
       --dataset cifar10 \
