@@ -72,6 +72,12 @@ $ python train.py \
       --niter 50 \
       --session 1
 ```
+<div style="color:#0000FF" align="center">
+<img src="images/mnist-two/realimg.png" width="215"/> <img src="images/mnist-two/bgimg.png" width="215"/> <img src="images/mnist-two/fgimg1.png" width="215"/> <img src="images/mnist-two/fgmask1.png" width="215"/>
+</div>
+<div style="color:#0000FF" align="center">
+<img src="images/mnist-two/canvas1.png" width="215"/> <img src="images/mnist-two/fgimg2.png" width="215"/> <img src="images/mnist-two/fgmask2.png" width="215"/> <img src="images/mnist-two/canvas2.png" width="215"/>
+</div>
 
 3. **CUB200**. We run on CUB200 in 64x64. Here is the processed [dataset](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Download it and unzip it into datasets/cub200. Then, run the following command:
 ```bash
