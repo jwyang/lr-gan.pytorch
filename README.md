@@ -14,7 +14,7 @@ By this way, LR-GAN can significantly reduce the blending between background and
 
 ### Disclaimer
 
-This is the reproduction code of LR-GAN based on Pytorch. Our original code was implemented based on Torch during the first author's internship. All the results presented in our paper were obtained based on the Torch code, which cannot be released since the firm restriction. This project is an attempt to reproduce the results in our paper.
+This is the implementation code of LR-GAN based on Pytorch. It is developed based on [Pytorch DCGAN](https://github.com/pytorch/examples/tree/master/dcgan). Our original code was implemented based on Torch during the first author's internship. All the results presented in our paper were obtained based on the Torch code, which cannot be released since the firm restriction. This project is an attempt to reproduce the results in our paper.
 
 ### Citation
 
@@ -52,8 +52,7 @@ $ python train.py \
       --niter 50 \
       --session 1
 ```
-
-Below are randomly generation results using trained model in epoch 50:
+Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session; *niter* specifies the number of training epochs. Below are randomly generation results using trained model in epoch 50:
 
 <div style="color:#0000FF" align="center">
 <img src="images/mnist-one/bgimg.png" width="215"/> <img src="images/mnist-one/fgimg.png" width="215"/> <img src="images/mnist-one/fgmask.png" width="215"/> <img src="images/mnist-one/final.png" width="215"/>
@@ -112,7 +111,7 @@ $ python train.py \
       --niter 100 \
       --session 1
 ```
-Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session. Here are some randomly sampled generation results:
+Here are some randomly sampled generation results:
 
 <div style="color:#0000FF" align="center">
 <img src="images/cifar-10/bgimg.png" width="215"/> <img src="images/cifar-10/fgimg.png" width="215"/> <img src="images/cifar-10/fgmask.png" width="215"/> <img src="images/cifar-10/final.png" width="215"/>
