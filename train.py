@@ -149,7 +149,7 @@ class _netG(nn.Module):
         # define background generator G_bg
         self.Gbgc, self.depth_in_bg = self.buildNetGbg(nsize)
         self.Gbgi = nn.Sequential(
-            nn.ConvTranspose2d(self.depth_in_bg, nc, 4, 2, 1, bias=True),
+            nn.ConvTranspose2d(self.depth_in_bg, nc, 4, 2, 1, bias=False),
             nn.Tanh()
         )
         # define foreground generator G_fg
@@ -157,12 +157,12 @@ class _netG(nn.Module):
         self.Gfgc, self.depth_in = self.buildNetGfg(nsize)
         #### define the layer for generating fg image
         self.Gfgi = nn.Sequential(
-            nn.ConvTranspose2d(self.depth_in, nc, 4, 2, 1, bias=True),
+            nn.ConvTranspose2d(self.depth_in, nc, 4, 2, 1, bias=False),
             nn.Tanh()
         )
         #### define the layer for generating fg mask
         self.Gfgm = nn.Sequential(
-            nn.ConvTranspose2d(self.depth_in, 1, 4, 2, 1, bias=True),
+            nn.ConvTranspose2d(self.depth_in, 1, 4, 2, 1, bias=False),
             nn.Sigmoid()
         )
 
@@ -187,6 +187,7 @@ class _netG(nn.Module):
         self.encoderfc = self.buildEncoderFC(self.depth_in, self.nsize_out, nz)
         self.nlnet = nn.Sequential(
             nn.Linear(nz + nz, nz),
+            nn.BatchNorm1d(nz),
             nn.Tanh()
         )
 
@@ -194,7 +195,7 @@ class _netG(nn.Module):
         net = nn.Sequential()
         size_map = 1
         name = str(size_map)
-        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 4, 4, 4, 0, bias=True))
+        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 4, 4, 4, 0, bias=False))
         net.add_module('bn' + name, nn.BatchNorm2d(ngf * 4))
         net.add_module('relu' + name, nn.ReLU(True))
         size_map = 4
@@ -202,7 +203,7 @@ class _netG(nn.Module):
         depth_out = 2 * ngf
         while size_map < nsize / 2:
             name = str(size_map)
-            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=True))
+            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=False))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
@@ -214,7 +215,7 @@ class _netG(nn.Module):
         net = nn.Sequential()
         size_map = 1
         name = str(size_map)
-        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 8, 4, 4, 0, bias=True))
+        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 8, 4, 4, 0, bias=False))
         net.add_module('bn' + name, nn.BatchNorm2d(ngf * 8))
         net.add_module('relu' + name, nn.ReLU(True))
         size_map = 4
@@ -222,7 +223,7 @@ class _netG(nn.Module):
         depth_out = 4 * ngf
         while size_map < nsize / 2:
             name = str(size_map)
-            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=True))
+            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=False))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
@@ -244,8 +245,8 @@ class _netG(nn.Module):
     def buildEncoderFC(self, depth_in, nsize_in, out_dim):
         net = nn.Sequential(
             nn.Linear(depth_in * nsize_in * nsize_in, out_dim),
-            nn.BatchNorm1d(out_dim)
-            # nn.Tanh()
+            nn.BatchNorm1d(out_dim),
+            nn.Tanh()
         )
         return net
 
@@ -258,12 +259,12 @@ class _netG(nn.Module):
         y_s = Tin.select(1, 4)
         y_t = Tin.select(1, 5)
 
-        x_s_clamp = torch.unsqueeze(x_s.clamp(opt.maxobjscale, 4), 1)
+        x_s_clamp = torch.unsqueeze(x_s.clamp(opt.maxobjscale, 2 * opt.maxobjscale), 1)
         x_r_clmap = torch.unsqueeze(x_r.clamp(-0.3, 0.3), 1)
         x_t_clmap = torch.unsqueeze(x_t.clamp(-1, 1), 1)
 
         y_r_clamp = torch.unsqueeze(y_r.clamp(-0.3, 0.3), 1)
-        y_s_clamp = torch.unsqueeze(y_s.clamp(opt.maxobjscale, 4), 1)
+        y_s_clamp = torch.unsqueeze(y_s.clamp(opt.maxobjscale, 2 * opt.maxobjscale), 1)
         y_t_clamp = torch.unsqueeze(y_t.clamp(-1, 1), 1)
 
         Tout = torch.cat([x_s_clamp, x_r_clmap, x_t_clmap, y_r_clamp, y_s_clamp, y_t_clamp], 1)
@@ -280,8 +281,8 @@ class _netG(nn.Module):
             hx, cx = self.lstmcell(input[i], (hx, cx))
             hx_view = hx.contiguous().view(batchSize, nz, 1, 1)
             if i == 0:
-                # We send input vector to background generator to make it
-                # equivalent to DCGAN when ntimestep is 1.
+                # We send input vector to background generator directly
+                # to make it equivalent to DCGAN when ntimestep = 1.
                 input_view = input[i].view(batchSize, nz, 1, 1)
                 bgc = self.Gbgc(input_view)
                 canvas = self.Gbgi(bgc)
@@ -347,7 +348,7 @@ class _netD(nn.Module):
         size_map = nsize
         while size_map > 4:
             name = str(size_map)
-            net.add_module('conv' + name, nn.Conv2d(depth_in, depth_out, 4, 2, 1, bias=True))
+            net.add_module('conv' + name, nn.Conv2d(depth_in, depth_out, 4, 2, 1, bias=False))
             if size_map < nsize:
                 net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('lrelu' + name, nn.LeakyReLU(0.2, inplace=True))
@@ -355,7 +356,7 @@ class _netD(nn.Module):
             depth_out = 2 * depth_in
             size_map = size_map / 2
         name = str(size_map)
-        net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=True))
+        net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=False))
         net.add_module('sigmoid' + name, nn.Sigmoid())
         return net
 
@@ -410,7 +411,8 @@ for epoch in range(opt.epoch_s, opt.niter):
         batch_size = real_cpu.size(0)
         if opt.cuda:
             real_cpu = real_cpu.cuda()
-        real_cpu = torch.mean(real_cpu, 1)
+        if opt.dataset == 'mnist-one' or opt.dataset == 'mnist-two':
+            real_cpu = torch.mean(real_cpu, 1)
         input.resize_as_(real_cpu).copy_(real_cpu)
         label.resize_(batch_size).fill_(real_label)
         inputv = Variable(input)
