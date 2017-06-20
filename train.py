@@ -90,6 +90,7 @@ elif opt.dataset == 'cifar10':
     )
     checkfreq = 100
     nc = 3
+    rot = 0.1
 elif opt.dataset == 'cub200':
     trans = transforms.Compose([
         transforms.Scale(opt.imageSize),
@@ -99,6 +100,7 @@ elif opt.dataset == 'cub200':
     dataset = dset.ImageFolder('datasets/cub200/images', transform = trans)
     checkfreq = 40
     nc = 3
+    rot = 0.1
 elif opt.dataset == 'mnist-one':
     trans = transforms.Compose([
         transforms.Scale(opt.imageSize),
@@ -108,6 +110,7 @@ elif opt.dataset == 'mnist-one':
     dataset = dset.ImageFolder('datasets/mnist-one/images', transform = trans)
     checkfreq = 100
     nc = 1
+    rot = 0.3
 elif opt.dataset == 'mnist-two':
     trans = transforms.Compose([
         transforms.Scale(opt.imageSize),
@@ -117,6 +120,7 @@ elif opt.dataset == 'mnist-two':
     dataset = dset.ImageFolder('datasets/mnist-two/images', transform = trans)
     checkfreq = 100
     nc = 1
+    rot = 0.3
 assert dataset
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batchSize,
                                          shuffle=True, num_workers=int(opt.workers))
@@ -133,10 +137,10 @@ def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
         m.weight.data.normal_(0.0, 0.02)
-        m.bias.data.fill_(0)
-    elif classname.find('BatchNorm') != -1:
-        m.weight.data.normal_(1.0, 0.02)
-        m.bias.data.fill_(0)
+        # m.bias.data.fill_(0)
+    # elif classname.find('BatchNorm') != -1:
+    #     m.weight.data.normal_(1.0, 0.02)
+    #     m.bias.data.fill_(0)
 
 class _netG(nn.Module):
     def __init__(self, ngpu, nsize):
@@ -149,7 +153,7 @@ class _netG(nn.Module):
         # define background generator G_bg
         self.Gbgc, self.depth_in_bg = self.buildNetGbg(nsize)
         self.Gbgi = nn.Sequential(
-            nn.ConvTranspose2d(self.depth_in_bg, nc, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d(self.depth_in_bg, nc, 4, 2, 1, bias=True),
             nn.Tanh()
         )
         # define foreground generator G_fg
@@ -157,12 +161,12 @@ class _netG(nn.Module):
         self.Gfgc, self.depth_in = self.buildNetGfg(nsize)
         #### define the layer for generating fg image
         self.Gfgi = nn.Sequential(
-            nn.ConvTranspose2d(self.depth_in, nc, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d(self.depth_in, nc, 4, 2, 1, bias=True),
             nn.Tanh()
         )
         #### define the layer for generating fg mask
         self.Gfgm = nn.Sequential(
-            nn.ConvTranspose2d(self.depth_in, 1, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d(self.depth_in, 1, 4, 2, 1, bias=True),
             nn.Sigmoid()
         )
 
@@ -195,7 +199,7 @@ class _netG(nn.Module):
         net = nn.Sequential()
         size_map = 1
         name = str(size_map)
-        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 4, 4, 4, 0, bias=False))
+        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 4, 4, 4, 0, bias=True))
         net.add_module('bn' + name, nn.BatchNorm2d(ngf * 4))
         net.add_module('relu' + name, nn.ReLU(True))
         size_map = 4
@@ -203,7 +207,7 @@ class _netG(nn.Module):
         depth_out = 2 * ngf
         while size_map < nsize / 2:
             name = str(size_map)
-            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=False))
+            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=True))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
@@ -215,7 +219,7 @@ class _netG(nn.Module):
         net = nn.Sequential()
         size_map = 1
         name = str(size_map)
-        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 8, 4, 4, 0, bias=False))
+        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 8, 4, 4, 0, bias=True))
         net.add_module('bn' + name, nn.BatchNorm2d(ngf * 8))
         net.add_module('relu' + name, nn.ReLU(True))
         size_map = 4
@@ -223,7 +227,7 @@ class _netG(nn.Module):
         depth_out = 4 * ngf
         while size_map < nsize / 2:
             name = str(size_map)
-            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=False))
+            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=True))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
@@ -260,12 +264,12 @@ class _netG(nn.Module):
         y_t = Tin.select(1, 5)
 
         x_s_clamp = torch.unsqueeze(x_s.clamp(opt.maxobjscale, 2 * opt.maxobjscale), 1)
-        x_r_clmap = torch.unsqueeze(x_r.clamp(-0.3, 0.3), 1)
-        x_t_clmap = torch.unsqueeze(x_t.clamp(-1, 1), 1)
+        x_r_clmap = torch.unsqueeze(x_r.clamp(-rot, rot), 1)
+        x_t_clmap = torch.unsqueeze(x_t.clamp(-0.8, 0.8), 1)
 
-        y_r_clamp = torch.unsqueeze(y_r.clamp(-0.3, 0.3), 1)
+        y_r_clamp = torch.unsqueeze(y_r.clamp(-rot, rot), 1)
         y_s_clamp = torch.unsqueeze(y_s.clamp(opt.maxobjscale, 2 * opt.maxobjscale), 1)
-        y_t_clamp = torch.unsqueeze(y_t.clamp(-1, 1), 1)
+        y_t_clamp = torch.unsqueeze(y_t.clamp(-0.8, 0.8), 1)
 
         Tout = torch.cat([x_s_clamp, x_r_clmap, x_t_clmap, y_r_clamp, y_s_clamp, y_t_clamp], 1)
         return Tout
@@ -348,7 +352,7 @@ class _netD(nn.Module):
         size_map = nsize
         while size_map > 4:
             name = str(size_map)
-            net.add_module('conv' + name, nn.Conv2d(depth_in, depth_out, 4, 2, 1, bias=False))
+            net.add_module('conv' + name, nn.Conv2d(depth_in, depth_out, 4, 2, 1, bias=True))
             if size_map < nsize:
                 net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('lrelu' + name, nn.LeakyReLU(0.2, inplace=True))
@@ -356,7 +360,7 @@ class _netD(nn.Module):
             depth_out = 2 * depth_in
             size_map = size_map / 2
         name = str(size_map)
-        net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=False))
+        net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=True))
         net.add_module('sigmoid' + name, nn.Sigmoid())
         return net
 
@@ -460,10 +464,21 @@ for epoch in range(opt.epoch_s, opt.niter):
                             '%s/%s_fake_samples_s_%01d_t_%01d_fgimg.png' % (opt.outimgf, opt.dataset, opt.session, t)) # normalize=True
                     vutils.save_image(fgmaskseq[t - 1].data.sub_(0.5).div_(0.5),
                             '%s/%s_fake_samples_s_%01d_t_%01d_fgmask.png' % (opt.outimgf, opt.dataset, opt.session, t)) # normalize=True
+
             if opt.evaluate:
                 exit()
 
+            for t in range(ntimestep):
+                vutils.save_image(fakeseq[t].data,
+                        '%s/visualize/%s/fake_samples_e_%01d.png' % (opt.outimgf, opt.dataset, epoch)) # normalize=True
+                if t > 0:
+                    vutils.save_image(fgimgseq[t - 1].data,
+                        '%s/visualize/%s/fake_samples_e_%01d_fgimg.png' % (opt.outimgf, opt.dataset, epoch)) # normalize=True
+                    vutils.save_image(fgmaskseq[t - 1].data.sub_(0.5).div_(0.5),
+                        '%s/visualize/%s/fake_samples_e_%01d_fgmask.png' % (opt.outimgf, opt.dataset, epoch)) # normalize=True
+
+
     # do checkpointing
     if epoch % 5 == 0:
-        torch.save(netG.state_dict(), '%s/%s_netG_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
-        torch.save(netD.state_dict(), '%s/%s_netD_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
+        torch.save(netG.state_dict(), '/srv/share/jyang375/%s/%s_netG_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
+        torch.save(netD.state_dict(), '/srv/share/jyang375/%s/%s_netD_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
