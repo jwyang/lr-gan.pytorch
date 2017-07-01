@@ -51,6 +51,15 @@ Then, you can try to train the LR-GAN model on the datasets: 1) MNIST-ONE; 2) MN
 <img src="images/mnist-one/realimg.png" width="215"/> <img src="images/mnist-two/realimg.png" width="215"/> <img src="images/cub200/realimg.png" width="215"/> <img src="images/cifar-10/realimg.png" width="215"/>
 </div>
 
+In the *datasets* folder, create subfolders for all these datasets separately:
+
+```bash
+$ mkdir datasets/mnist-one
+$ mkdir datasets/mnist-two
+$ mkdir datasets/cub200
+$ mkdir datasets/cifar10
+```
+
 #### Training
 
 1. **MNIST-ONE**. We first run experiments on MNIST-ONE, which can be downloaded from [here](https://filebox.ece.vt.edu/~jw2yang/datasets/mnist-one.tgz). Unzip this into datasets/mnist-one folder, and then run the following command:
@@ -98,7 +107,7 @@ The layout is similar to MNIST-ONE. As we an see, the generator generated bird-s
 ```bash
 $ python train.py \
       --dataset cifar10 \
-      --dataroot datasets/cifar-10 \
+      --dataroot datasets/cifar10 \
       --ntimestep 2 \
       --imageSize 32 \
       --maxobjscale 1.2 \
