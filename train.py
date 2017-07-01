@@ -137,10 +137,10 @@ def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
         m.weight.data.normal_(0.0, 0.02)
-        # m.bias.data.fill_(0)
-    # elif classname.find('BatchNorm') != -1:
-    #     m.weight.data.normal_(1.0, 0.02)
-    #     m.bias.data.fill_(0)
+        m.bias.data.fill_(0)
+    elif classname.find('BatchNorm') != -1:
+        m.weight.data.normal_(1.0, 0.02)
+        m.bias.data.fill_(0)
 
 class _netG(nn.Module):
     def __init__(self, ngpu, nsize):
@@ -161,7 +161,7 @@ class _netG(nn.Module):
         self.Gfgc, self.depth_in = self.buildNetGfg(nsize)
         #### define the layer for generating fg image
         self.Gfgi = nn.Sequential(
-            nn.ConvTranspose2d(self.depth_in, nc, 4, 2, 1, bias=True),
+            nn.ConvTranspose2d(self.depth_in, nc, 4, 2, 1, bias=False),
             nn.Tanh()
         )
         #### define the layer for generating fg mask
@@ -219,7 +219,7 @@ class _netG(nn.Module):
         net = nn.Sequential()
         size_map = 1
         name = str(size_map)
-        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 8, 4, 4, 0, bias=True))
+        net.add_module('convt' + name, nn.ConvTranspose2d(nz, ngf * 8, 4, 4, 0, bias=False))
         net.add_module('bn' + name, nn.BatchNorm2d(ngf * 8))
         net.add_module('relu' + name, nn.ReLU(True))
         size_map = 4
@@ -227,7 +227,7 @@ class _netG(nn.Module):
         depth_out = 4 * ngf
         while size_map < nsize / 2:
             name = str(size_map)
-            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=True))
+            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=False))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
@@ -265,11 +265,11 @@ class _netG(nn.Module):
 
         x_s_clamp = torch.unsqueeze(x_s.clamp(opt.maxobjscale, 2 * opt.maxobjscale), 1)
         x_r_clmap = torch.unsqueeze(x_r.clamp(-rot, rot), 1)
-        x_t_clmap = torch.unsqueeze(x_t.clamp(-0.8, 0.8), 1)
+        x_t_clmap = torch.unsqueeze(x_t.clamp(-1.0, 1.0), 1)
 
         y_r_clamp = torch.unsqueeze(y_r.clamp(-rot, rot), 1)
         y_s_clamp = torch.unsqueeze(y_s.clamp(opt.maxobjscale, 2 * opt.maxobjscale), 1)
-        y_t_clamp = torch.unsqueeze(y_t.clamp(-0.8, 0.8), 1)
+        y_t_clamp = torch.unsqueeze(y_t.clamp(-1.0, 1.0), 1)
 
         Tout = torch.cat([x_s_clamp, x_r_clmap, x_t_clmap, y_r_clamp, y_s_clamp, y_t_clamp], 1)
         return Tout
@@ -318,7 +318,7 @@ class _netG(nn.Module):
 
                 fgt = self.Gtransform(input4g) # Nx6
                 fgt_clamp = self.clampT(fgt)
-                fgt_view = fgt_clamp.contiguous().view(batchSize, 2, 3) # Nx2N3
+                fgt_view = fgt_clamp.contiguous().view(batchSize, 2, 3) # Nx2x3
                 fgg = self.Ggrid(fgt_view)
                 canvas4c = canvas.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(bg, 1, 2), 2, 3) #
                 fgi4c = fgi.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(fgi, 1, 2), 2, 3) #
@@ -352,7 +352,7 @@ class _netD(nn.Module):
         size_map = nsize
         while size_map > 4:
             name = str(size_map)
-            net.add_module('conv' + name, nn.Conv2d(depth_in, depth_out, 4, 2, 1, bias=True))
+            net.add_module('conv' + name, nn.Conv2d(depth_in, depth_out, 4, 2, 1, bias=False))
             if size_map < nsize:
                 net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('lrelu' + name, nn.LeakyReLU(0.2, inplace=True))
@@ -360,7 +360,7 @@ class _netD(nn.Module):
             depth_out = 2 * depth_in
             size_map = size_map / 2
         name = str(size_map)
-        net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=True))
+        net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=False))
         net.add_module('sigmoid' + name, nn.Sigmoid())
         return net
 
@@ -468,17 +468,8 @@ for epoch in range(opt.epoch_s, opt.niter):
             if opt.evaluate:
                 exit()
 
-            for t in range(ntimestep):
-                vutils.save_image(fakeseq[t].data,
-                        '%s/visualize/%s/fake_samples_e_%01d.png' % (opt.outimgf, opt.dataset, epoch)) # normalize=True
-                if t > 0:
-                    vutils.save_image(fgimgseq[t - 1].data,
-                        '%s/visualize/%s/fake_samples_e_%01d_fgimg.png' % (opt.outimgf, opt.dataset, epoch)) # normalize=True
-                    vutils.save_image(fgmaskseq[t - 1].data.sub_(0.5).div_(0.5),
-                        '%s/visualize/%s/fake_samples_e_%01d_fgmask.png' % (opt.outimgf, opt.dataset, epoch)) # normalize=True
-
 
     # do checkpointing
     if epoch % 5 == 0:
-        torch.save(netG.state_dict(), '/srv/share/jyang375/%s/%s_netG_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
-        torch.save(netD.state_dict(), '/srv/share/jyang375/%s/%s_netD_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
+        torch.save(netG.state_dict(), '%s/%s_netG_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
+        torch.save(netD.state_dict(), '%s/%s_netD_s_%d_epoch_%d.pth' % (opt.outmodelf, opt.dataset, opt.session, epoch))
