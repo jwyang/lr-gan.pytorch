@@ -35,6 +35,8 @@ If you find this code useful, please cite the following paper:
 
 ### Train LR-GAN
 
+#### Preparation
+
 Pull this project to your own machine, and then make sure Pytorch is installed successfully. Create a folder *datasets* to hold the training sets, and a folder *images* to save the generation results, and a folder *models* to save the models (generators and discriminators):
 
 ```bash
@@ -48,6 +50,8 @@ Then, you can try to train the LR-GAN model on the datasets: 1) MNIST-ONE; 2) MN
 <div style="color:#0000FF" align="center">
 <img src="images/mnist-one/realimg.png" width="215"/> <img src="images/mnist-two/realimg.png" width="215"/> <img src="images/cub200/realimg.png" width="215"/> <img src="images/cifar-10/realimg.png" width="215"/>
 </div>
+
+#### Training
 
 1. **MNIST-ONE**. We first run experiments on MNIST-ONE, which can be downloaded from [here](https://filebox.ece.vt.edu/~jw2yang/datasets/mnist-one.tgz). Unzip this into datasets/mnist-one folder, and then run the following command:
 ```bash
@@ -109,7 +113,7 @@ Here are some randomly sampled generation results:
 
 From left to right, they are generated background images, foreground images, foreground masks and final images. We can clearly find some horse-shape, bird-shape and boat-shape masks generated, and the finally generated images are more sharper.
 
-2. **MNIST-TWO**. The images are 64x64 and contain two digits. We train the model using the following command:
+4. **MNIST-TWO**. The images are 64x64 and contain two digits. We train the model using the following command:
 ```bash
 $ python train.py \
       --dataset mnist-two \
