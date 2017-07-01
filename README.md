@@ -157,7 +157,7 @@ $ python train.py \
 Below are the generation results:
 
 <div style="color:#0000FF" align="center">
-<img src="images/lfw/realimg.png" width="160"/><img src="images/lfw/bgimg.png" width="160"/> <img src="images/lfw/fgimg.png" width="160"/> <img src="images/lfw/fgmask.png" width="160"/> <img src="images/lfw/final.png" width="160"/>
+<img src="images/lfw/realimg.png" width="170"/> <img src="images/lfw/bgimg.png" width="170"/> <img src="images/lfw/fgimg.png" width="170"/> <img src="images/lfw/fgmask.png" width="170"/> <img src="images/lfw/final.png" width="170"/>
 </div>
 
 ### Test LR-GAN
