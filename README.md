@@ -142,7 +142,7 @@ $ python train.py \
 
 The layout is the same to the one in our paper.
 
-4. **lfw**. We train on 64x64 images, which can be downloaded from [here](). We train the model using the following command:
+4. **lfw**. We train on 64x64 images, which can be downloaded from [here](https://filebox.ece.vt.edu/~jw2yang/datasets/cub200.tgz). Unzip it to the folder datasets/lfw. We train the model using the following command:
 ```bash
 $ python train.py \
       --dataset lfw \
