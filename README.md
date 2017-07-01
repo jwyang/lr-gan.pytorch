@@ -144,7 +144,7 @@ The layout is the same to the one in our paper.
 
 ### Test LR-GAN
 
-After the training, the checkpoints will be saved to *models*. You can append two more options (*netG* and *evaluate*) to the command for training model. Use cifar10 as examples, it will be:
+After the training, the checkpoints will be saved to *models*. You can append two more options (*netG* and *evaluate*) to the command used for training model. Use cifar10 as the example, it will be:
 ```bash
 $ python train.py \
       --dataset cifar10 \
