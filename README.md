@@ -142,6 +142,24 @@ $ python train.py \
 
 The layout is the same to the one in our paper.
 
+4. **lfw**. The images are 64x64. We train the model using the following command:
+```bash
+$ python train.py \
+      --dataset lfw \
+      --dataroot datasets/lfw \
+      --ntimestep 2 \
+      --imageSize 64 \
+      --maxobjscale 1.3 \
+      --niter 100 \
+      --session 1
+```
+
+Below are the generation results:
+
+<div style="color:#0000FF" align="center">
+<img src="images/lfw/realimg.png" width="192"/><img src="images/lfw/bgimg.png" width="192"/> <img src="images/lfw/fgimg.png" width="192"/> <img src="images/lfw/fgmask.png" width="192"/> <img src="images/lfw/final.png" width="192"/>
+</div>
+
 ### Test LR-GAN
 
 After the training, the checkpoints will be saved to *models*. You can append two more options (*netG* and *evaluate*) to the command used for training model. Use cifar10 as the example, it will be:
