@@ -142,7 +142,7 @@ $ python train.py \
 
 The layout is the same to the one in our paper.
 
-4. **lfw**. The images are 64x64. We train the model using the following command:
+4. **lfw**. We train on 64x64 images, which can be downloaded from [here](). We train the model using the following command:
 ```bash
 $ python train.py \
       --dataset lfw \
@@ -159,6 +159,8 @@ Below are the generation results:
 <div style="color:#0000FF" align="center">
 <img src="images/lfw/realimg.png" width="170"/> <img src="images/lfw/bgimg.png" width="170"/> <img src="images/lfw/fgimg.png" width="170"/> <img src="images/lfw/fgmask.png" width="170"/> <img src="images/lfw/final.png" width="170"/>
 </div>
+
+The left most 8x8 grid are the real images, followed by generated backgrounds, foregrounds, masks and final images.
 
 ### Test LR-GAN
 
