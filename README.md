@@ -49,7 +49,7 @@ Then, you can try to train the LR-GAN model on the datasets: 1) MNIST-ONE; 2) MN
 <img src="images/mnist-one/realimg.png" width="215"/> <img src="images/mnist-two/realimg.png" width="215"/> <img src="images/cub200/realimg.png" width="215"/> <img src="images/cifar-10/realimg.png" width="215"/>
 </div>
 
-1. **MNIST-ONE**. We first run experiments on MNIST-ONE, which can be downloaded from [here](https://filebox.ece.vt.edu/~jw2yang/datasets/mnist-one.tgz). Run the following command:
+1. **MNIST-ONE**. We first run experiments on MNIST-ONE, which can be downloaded from [here](https://filebox.ece.vt.edu/~jw2yang/datasets/mnist-one.tgz). Unzip this to the *datasets* folder, and then run the following command:
 ```bash
 $ python train.py \
       --dataset mnist-one \
@@ -60,7 +60,7 @@ $ python train.py \
       --niter 50 \
       --session 1
 ```
-Here, *ntimestep* specifies the number of recursive timesteps; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session; *niter* specifies the number of training epochs. Below are randomly generation results using trained model in epoch 50:
+Here, *ntimestep* specifies the number of recursive layers, e.g., 2 means one background and one foreground layer; *imageSize* is the scale size the training images; *maxobjscale* is the maximal object (foreground) scale, the larger the value, the smaller the object size; *session* specifies the training session; *niter* specifies the number of training epochs. Below are randomly generation results using trained model in epoch 50:
 
 <div style="color:#0000FF" align="center">
 <img src="images/mnist-one/bgimg.png" width="215"/> <img src="images/mnist-one/fgimg.png" width="215"/> <img src="images/mnist-one/fgmask.png" width="215"/> <img src="images/mnist-one/final.png" width="215"/>
