@@ -143,3 +143,18 @@ $ python train.py \
 The layout is the same to the one in our paper.
 
 ### Test LR-GAN
+
+After the training, the checkpoints will be saved to *models*. You can append two more options (*netG* and *evaluate*) to the command for training model. Use cifar10 as examples, it will be:
+```bash
+$ python train.py \
+      --dataset cifar10 \
+      --dataroot datasets/cifar10 \
+      --ntimestep 2 \
+      --imageSize 32 \
+      --maxobjscale 1.2 \
+      --niter 100 \
+      --session 1
+      --netG models/cifar10_netG_s_1_epoch_100.pth
+      --evaluate True
+```
+Then you can get the generation results for the session:1 and epoch:100 model in the folder *images*.
