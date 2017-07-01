@@ -14,7 +14,7 @@ By this way, LR-GAN can significantly reduce the blending between background and
 
 ### Disclaimer
 
-This is the implementation code of LR-GAN based on Pytorch. It is developed based on [Pytorch DCGAN](https://github.com/pytorch/examples/tree/master/dcgan). Our original code was implemented based on Torch during the first author's internship. All the results presented in our paper were obtained based on the Torch code, which cannot be released since the firm restriction. This project is an attempt to reproduce the results in our paper.
+This is the reimplementation code of LR-GAN based on Pytorch. It is developed based on [Pytorch DCGAN](https://github.com/pytorch/examples/tree/master/dcgan). Our original code was implemented based on Torch during the first author's internship. All the results presented in our paper were obtained based on the Torch code, which cannot be released since the firm restriction. This project is an attempt to reproduce the results in our paper.
 
 ### Citation
 
@@ -35,7 +35,15 @@ If you find this code useful, please cite the following paper:
 
 ### Train LR-GAN
 
-Pull this project to your own machine, and then make sure Pytorch is installed successfully. Create a folder *datasets* to hold the training sets. Then, you can try to train the LR-GAN model on the datasets: 1) MNIST-ONE; 2) MNIST-TWO; 3) CUB-200; 4) CIFAR-10. The sample images are shown below:
+Pull this project to your own machine, and then make sure Pytorch is installed successfully. Create a folder *datasets* to hold the training sets, and a folder *images* to save the generation results, and a folder *models* to save the models (generators and discriminators):
+
+```bash
+$ mkdir datasets
+$ mkdir images
+$ mkdir models
+```
+
+Then, you can try to train the LR-GAN model on the datasets: 1) MNIST-ONE; 2) MNIST-TWO; 3) CUB-200; 4) CIFAR-10. The sample images are shown below:
 
 <div style="color:#0000FF" align="center">
 <img src="images/mnist-one/realimg.png" width="215"/> <img src="images/mnist-two/realimg.png" width="215"/> <img src="images/cub200/realimg.png" width="215"/> <img src="images/cifar-10/realimg.png" width="215"/>
@@ -118,3 +126,5 @@ Here are some randomly sampled generation results:
 </div>
 
 From left to right, they are generated background images, foreground images, foreground masks and final images. We can clearly find some horse-shape, bird-shape and boat-shape masks generated, and the finally generated images are more sharper.
+
+### Test LR-GAN
