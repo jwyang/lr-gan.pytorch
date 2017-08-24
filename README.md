@@ -31,7 +31,7 @@ If you find this code useful, please cite the following paper:
 
 1. PyTorch. Install [PyTorch](http://pytorch.org/) with proper commands. Make sure you also install *torchvision*.
 
-2. Spatial transformer network with mask (STNM). We have provided this module in this project. But if you want to do some your own changes, please refer to this [project](https://github.com/jwyang/stnm.pytorch).
+2. Spatial transformer network with mask (STNM). Install STNM from this [project](https://github.com/jwyang/stnm.pytorch). **Since we might use different gpu devices and cuda driver, etc. Please make your own stnm.so on your machine.**
 
 ### Train LR-GAN
 
