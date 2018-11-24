@@ -1,4 +1,3 @@
-from __future__ import print_function
 import argparse
 import os
 import random
@@ -187,7 +186,7 @@ class _netG(nn.Module):
             self.Compositors.append(STNM())
 
         # define encoder when ntimestep > 2
-        self.encoderconv = self.buildEncoderConv(self.depth_in, nsize / 2, self.nsize_out)
+        self.encoderconv = self.buildEncoderConv(self.depth_in, nsize // 2, self.nsize_out)
         self.encoderfc = self.buildEncoderFC(self.depth_in, self.nsize_out, nz)
         self.nlnet = nn.Sequential(
             nn.Linear(nz + nz, nz),
@@ -211,7 +210,7 @@ class _netG(nn.Module):
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
-            depth_out = max(depth_in / 2, 64)
+            depth_out = max(depth_in // 2, 64)
             size_map = size_map * 2
         return net, depth_in
 
@@ -231,7 +230,7 @@ class _netG(nn.Module):
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
-            depth_out = max(depth_in / 2, 64)
+            depth_out = max(depth_in // 2, 64)
             size_map = size_map * 2
         return net, depth_in
 
@@ -243,7 +242,7 @@ class _netG(nn.Module):
             net.add_module('avgpool' + name, nn.AvgPool2d(4, 2, 1))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_in))
             net.add_module('lrelu' + name, nn.LeakyReLU(0.2, inplace=True))
-            nsize_i = nsize_i / 2
+            nsize_i = nsize_i // 2
         return net
 
     def buildEncoderFC(self, depth_in, nsize_in, out_dim):
@@ -358,7 +357,7 @@ class _netD(nn.Module):
             net.add_module('lrelu' + name, nn.LeakyReLU(0.2, inplace=True))
             depth_in = depth_out
             depth_out = 2 * depth_in
-            size_map = size_map / 2
+            size_map = size_map // 2
         name = str(size_map)
         net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=False))
         net.add_module('sigmoid' + name, nn.Sigmoid())
