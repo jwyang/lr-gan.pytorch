@@ -4,6 +4,7 @@ import os
 import random
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
@@ -14,6 +15,7 @@ import torchvision.utils as vutils
 from torch.autograd import Variable
 from modules.stnm import STNM
 from modules.gridgen import AffineGridGen, CylinderGridGen, CylinderGridGenV2, DenseAffine3DGridGen, DenseAffine3DGridGen_rotate
+import pdb
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', required=True, help='cifar10 | lsun | imagenet | folder | lfw ')
@@ -207,11 +209,11 @@ class _netG(nn.Module):
         depth_out = 2 * ngf
         while size_map < nsize / 2:
             name = str(size_map)
-            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1, bias=True))
+            net.add_module('convt' + name, nn.ConvTranspose2d(depth_in, depth_out, (4, 4), stride=2, padding=1, bias=True))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
-            depth_out = max(depth_in / 2, 64)
+            depth_out = int(max(depth_in / 2, 64))
             size_map = size_map * 2
         return net, depth_in
 
@@ -231,7 +233,7 @@ class _netG(nn.Module):
             net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('relu' + name, nn.ReLU(True))
             depth_in = depth_out
-            depth_out = max(depth_in / 2, 64)
+            depth_out = int(max(depth_in / 2, 64))
             size_map = size_map * 2
         return net, depth_in
 
@@ -239,11 +241,11 @@ class _netG(nn.Module):
         net = nn.Sequential()
         nsize_i = nsize_in
         while nsize_i > nsize_out:
-            name = str(nsize_i)
-            net.add_module('avgpool' + name, nn.AvgPool2d(4, 2, 1))
+            name = str(int(nsize_i))
+            net.add_module('avgpool' + name, nn.AvgPool2d(4, stride=2, padding=1))
             net.add_module('bn' + name, nn.BatchNorm2d(depth_in))
             net.add_module('lrelu' + name, nn.LeakyReLU(0.2, inplace=True))
-            nsize_i = nsize_i / 2
+            nsize_i = int(nsize_i / 2)
         return net
 
     def buildEncoderFC(self, depth_in, nsize_in, out_dim):
@@ -319,12 +321,17 @@ class _netG(nn.Module):
                 fgt = self.Gtransform(input4g) # Nx6
                 fgt_clamp = self.clampT(fgt)
                 fgt_view = fgt_clamp.contiguous().view(batchSize, 2, 3) # Nx2x3
-                fgg = self.Ggrid(fgt_view)
-                canvas4c = canvas.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(bg, 1, 2), 2, 3) #
-                fgi4c = fgi.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(fgi, 1, 2), 2, 3) #
-                fgm4c = fgm.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(fgm, 1, 2), 2, 3) #
-                temp = self.Compositors[i - 1](canvas4c, fgi4c, fgg, fgm4c)
-                canvas = temp.permute(0, 3, 1, 2).contiguous() # torch.transpose(torch.transpose(temp, 2, 3), 1, 2) #
+
+                fgg = F.affine_grid(fgt_view, canvas.shape)
+                canvas = self.Compositors[i - 1](canvas, fgi, fgg, fgm)
+
+                # fgg = self.Ggrid(fgt_view)
+                # canvas4c = canvas.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(bg, 1, 2), 2, 3) #
+                # fgi4c = fgi.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(fgi, 1, 2), 2, 3) #
+                # fgm4c = fgm.permute(0, 2, 3, 1).contiguous() # torch.transpose(torch.transpose(fgm, 1, 2), 2, 3) #
+                # temp = self.Compositors[i - 1](canvas4c, fgi4c, fgg, fgm4c)
+                # canvas = temp.permute(0, 3, 1, 2).contiguous() # torch.transpose(torch.transpose(temp, 2, 3), 1, 2) #
+
                 outputsT.append(canvas)
                 fgimgsT.append(fgi)
                 fgmaskT.append(fgm)
@@ -351,14 +358,14 @@ class _netD(nn.Module):
         depth_out = ndf
         size_map = nsize
         while size_map > 4:
-            name = str(size_map)
+            name = str(int(size_map))
             net.add_module('conv' + name, nn.Conv2d(depth_in, depth_out, 4, 2, 1, bias=False))
             if size_map < nsize:
                 net.add_module('bn' + name, nn.BatchNorm2d(depth_out))
             net.add_module('lrelu' + name, nn.LeakyReLU(0.2, inplace=True))
             depth_in = depth_out
             depth_out = 2 * depth_in
-            size_map = size_map / 2
+            size_map = int(size_map / 2)
         name = str(size_map)
         net.add_module('conv' + name, nn.Conv2d(depth_in, 1, 4, 1, 0, bias=False))
         net.add_module('sigmoid' + name, nn.Sigmoid())
@@ -451,7 +458,7 @@ for epoch in range(opt.epoch_s, opt.niter):
 
         print('[%d][%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f'
               % (opt.session, epoch, opt.niter, i, len(dataloader),
-                 errD.data[0], errG.data[0], D_x, D_G_z1, D_G_z2))
+                 errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
         if i % checkfreq == 0:
             vutils.save_image(real_cpu,
                     '%s/%s_real_samples.png' % (opt.outimgf, opt.dataset)) # normalize=True
