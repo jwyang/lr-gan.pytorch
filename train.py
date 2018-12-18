@@ -461,16 +461,16 @@ for epoch in range(opt.epoch_s, opt.niter):
                  errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
         if i % checkfreq == 0:
             vutils.save_image(real_cpu,
-                    '%s/%s_real_samples.png' % (opt.outimgf, opt.dataset)) # normalize=True
+                    '%s/%s_real_samples.png' % (opt.outimgf, opt.dataset), normalize=True) # normalize=True
             fake, fakeseq, fgimgseq, fgmaskseq = netG(fixed_noise)
             for t in range(ntimestep):
                 vutils.save_image(fakeseq[t].data,
-                        '%s/%s_fake_samples_s_%01d_t_%01d.png' % (opt.outimgf, opt.dataset, opt.session, t)) # normalize=True
+                        '%s/%s_fake_samples_s_%01d_t_%01d.png' % (opt.outimgf, opt.dataset, opt.session, t), normalize=True) # normalize=True
                 if t > 0:
                     vutils.save_image(fgimgseq[t - 1].data,
-                            '%s/%s_fake_samples_s_%01d_t_%01d_fgimg.png' % (opt.outimgf, opt.dataset, opt.session, t)) # normalize=True
-                    vutils.save_image(fgmaskseq[t - 1].data.sub_(0.5).div_(0.5),
-                            '%s/%s_fake_samples_s_%01d_t_%01d_fgmask.png' % (opt.outimgf, opt.dataset, opt.session, t)) # normalize=True
+                            '%s/%s_fake_samples_s_%01d_t_%01d_fgimg.png' % (opt.outimgf, opt.dataset, opt.session, t), normalize=True) # normalize=True
+                    vutils.save_image(fgmaskseq[t - 1].data,
+                            '%s/%s_fake_samples_s_%01d_t_%01d_fgmask.png' % (opt.outimgf, opt.dataset, opt.session, t), normalize=True) # normalize=True
 
             if opt.evaluate:
                 exit()
