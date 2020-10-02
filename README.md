@@ -157,7 +157,7 @@ $ python train.py \
 Below are the generation results:
 
 <div style="color:#0000FF" align="center">
-<img src="images/lfw/realimg.png" width="170"/> <img src="images/lfw/bgimg.png" width="170"/> <img src="images/lfw/fgimg.png" width="170"/> <img src="images/lfw/fgmask.png" width="170"/> <img src="images/lfw/final.png" width="170"/>
+<img src="images/lfw/realimg.png" width="140"/> <img src="images/lfw/bgimg.png" width="140"/> <img src="images/lfw/fgimg.png" width="140"/> <img src="images/lfw/fgmask.png" width="140"/> <img src="images/lfw/final.png" width="140"/>
 </div>
 
 The left most 8x8 grid are the real images, followed by generated backgrounds, foregrounds, masks and final images.
